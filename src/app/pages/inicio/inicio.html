@@ -1,0 +1,55 @@
+<div class="dashboard">
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <mat-card class="kpi">
+      <h4>Actas</h4>
+      <strong>120</strong>
+    </mat-card>
+
+    <mat-card class="kpi">
+      <h4>Activos</h4>
+      <strong>340</strong>
+    </mat-card>
+
+    <mat-card class="kpi">
+      <h4>Disponibles</h4>
+      <strong>85</strong>
+    </mat-card>
+
+    <mat-card class="kpi">
+      <h4>Responsables</h4>
+      <strong>42</strong>
+    </mat-card>
+  </div>
+
+  <!-- Gráficas -->
+  <div class="charts">
+
+    <mat-card>
+      <h3>Actas por mes</h3>
+      <canvas baseChart
+        [data]="lineChartData"
+        [options]="lineChartOptions"
+        chartType="line">
+      </canvas>
+    </mat-card>
+
+    <mat-card>
+      <h3>Activos por tipo</h3>
+      <canvas baseChart
+        [data]="pieChartData"
+        [type]="pieChartType">
+      </canvas>
+    </mat-card>
+
+    <mat-card>
+      <h3>Estado de activos</h3>
+      <canvas baseChart
+        [data]="barChartData"
+        [type]="barChartType">
+      </canvas>
+    </mat-card>
+
+  </div>
+</div>

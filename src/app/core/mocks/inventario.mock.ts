@@ -1,0 +1,48 @@
+import { InventarioModel } from '../models/inventario.model';
+
+export const INVENTARIO_MOCK: InventarioModel[] = [
+  {
+    id: 1,
+    modelo: 'Laptop Dell XPS 13',
+    tipo: 'Laptop',
+    serial: 'DXP-2394',
+    placa: 'SOD-151469',
+    placaAx: 'AX8231',
+    marca: 'Dell',
+    asignadoA: 'Migue Miranda',
+    estado: 'Asignado',
+  },
+  {
+    id: 2,
+    modelo: 'Monitor LG 27"',
+    tipo: 'Monitor',
+    serial: 'LG-9921',
+    placa: 'SOD-151469',
+    placaAx: 'AX8231',
+    marca: 'LG',
+    asignadoA: null,
+    estado: 'Disponible',
+  },
+  {
+    id: 3,
+    modelo: 'iPhone 12',
+    tipo: 'Móvil',
+    serial: 'APL-1209',
+    placa: 'SOD-151469',
+    placaAx: 'AX8231',
+    marca: 'Apple',
+    asignadoA: 'Soporte TI',
+    estado: 'Mantenimiento',
+  },
+  {
+    id: 4,
+    modelo: 'Teclado Logitech MX Keys',
+    tipo: 'Otro',
+    serial: 'LOG-5521',
+    placa: 'SOD-151469',
+    placaAx: 'AX8231',
+    marca: 'Logitech',
+    asignadoA: null,
+    estado: 'Disponible',
+  },
+];

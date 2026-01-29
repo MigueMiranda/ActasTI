@@ -1,0 +1,150 @@
+.inventory-page {
+  width: 100%;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 {
+    font-size: 24px;
+    font-weight: 500;
+  }
+}
+
+.primary-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #0066b3;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #005292;
+  }
+}
+
+.inventory-card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+thead {
+  background: #f1f5f9;
+}
+
+th,
+td {
+  padding: 14px 16px;
+  text-align: left;
+}
+
+th {
+  font-weight: 500;
+  color: #555;
+}
+
+tbody tr {
+  border-top: 1px solid #eee;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #f9fafb;
+  }
+}
+
+/* Estados */
+.status {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.assigned {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.available {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.maintenance {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Acciones */
+.actions {
+  display: flex;
+  gap: 8px;
+
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+    transition: color 0.15s;
+
+    &:hover {
+      color: #0066b3;
+    }
+
+    .material-icons {
+      font-size: 20px;
+    }
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 8px 14px;
+  border-radius: 999px;
+  width: 280px;
+
+  input {
+    border: none;
+    background: transparent;
+    outline: none;
+    margin-left: 8px;
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .material-icons {
+    font-size: 20px;
+    color: #666;
+  }
+}
+
+.empty {
+  text-align: center;
+  padding: 24px;
+  color: #777;
+}

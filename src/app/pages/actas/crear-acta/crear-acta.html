@@ -1,0 +1,241 @@
+<mat-card class="acta-card">
+  <mat-horizontal-stepper linear #stepper>
+    <!-- PASO 1 -->
+    <mat-step [stepControl]="responsableForm">
+      <form [formGroup]="responsableForm">
+        <ng-template matStepLabel>Responsable</ng-template>
+
+        <div class="form-grid">
+          <div class="col">
+            <mat-form-field appearance="outline">
+              <mat-label>Usuario</mat-label>
+              <input matInput formControlName="usuario" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Cedula</mat-label>
+              <input matInput formControlName="cedula" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="nombre" />
+            </mat-form-field>
+          </div>
+
+          <div class="col">
+            <mat-form-field appearance="outline">
+              <mat-label>Cargo</mat-label>
+              <input matInput formControlName="cargo" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Correo</mat-label>
+              <input matInput formControlName="correo" />
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div>
+          <button mat-raised-button color="primary" matStepperNext>Siguiente</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- PASO 2 -->
+    <mat-step [stepControl]="activosForm">
+      <form [formGroup]="activosForm">
+        <ng-template matStepLabel>Activos</ng-template>
+
+        <div class="form-grid">
+            <div class="col">
+                <mat-form-field appearance="outline">
+                    <mat-label>Serial</mat-label>
+                    <input matInput formControlName="serial" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>Placa</mat-label>
+                    <input matInput formControlName="placa" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>Placa AX</mat-label>
+                    <input matInput formControlName="placaAx" />
+                </mat-form-field>
+            </div>
+
+            <div class="col">
+                <mat-form-field appearance="outline">
+                    <mat-label>Tipo</mat-label>
+                    <input matInput formControlName="tipo" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>Marca</mat-label>
+                    <input matInput formControlName="marca" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>Modelo</mat-label>
+                    <input matInput formControlName="modelo" />
+                </mat-form-field>
+            </div>
+        </div>
+
+        <div class="actions">
+          <button mat-button matStepperPrevious>Volver</button>
+          <button mat-raised-button color="primary" (click)="guardarActivoYContinuar()">Siguiente</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- PASO 3 -->
+    <mat-step [stepControl]="ubicacionForm">
+      <form [formGroup]="ubicacionForm">
+        <ng-template matStepLabel>Ubicacion</ng-template>
+
+        <div class="form-grid">
+            <div class="col">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Tienda</mat-label>
+
+                <mat-select formControlName="tienda">
+                  @for (tienda of tiendas; track tienda.nombre) {
+                    <mat-option [value]="tienda.nombre">
+                      {{ tienda.nombre }}
+                    </mat-option>
+                  }
+                </mat-select>
+
+              </mat-form-field>
+            </div>
+            <div class="col">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Estado</mat-label>
+                    <mat-select formControlName="estado">
+                      @for (estado of estados; track estado.estado) {
+                        <mat-option [value]="estado.estado">
+                          {{ estado.estado }}
+                        </mat-option>
+                      }
+                </mat-select>
+                </mat-form-field>
+            </div>
+            <div class="col">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Ubicacion</mat-label>
+                    <input matInput formControlName="ubicacion" />
+                </mat-form-field>
+            </div>
+        </div>
+
+        <div class="actions">
+          <button mat-button matStepperPrevious>Volver</button>
+          <button mat-raised-button color="primary" matStepperNext>Siguiente</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- PASO 4 -->
+    <mat-step>
+      <ng-template matStepLabel>Confirmación</ng-template>
+
+      <div class="resumen-acta">
+
+        <h2 class="titulo">Resumen del Acta</h2>
+        <p class="subtitulo">Por favor, revise la información antes de generar el acta.</p>
+
+        <div class="resumen-grid">
+
+          <!-- RESPONSABLE -->
+          <section class="resumen-card">
+            <h3>Responsable</h3>
+
+            <div class="fila">
+              <span>Nombre</span>
+              <strong>{{ responsableForm.value.nombre }}</strong>
+            </div>
+
+            <div class="fila">
+              <span>Cédula</span>
+              <strong>{{ responsableForm.value.cedula }}</strong>
+            </div>
+
+            <div class="fila">
+              <span>Cargo</span>
+              <strong>{{ responsableForm.value.cargo }}</strong>
+            </div>
+
+            <div class="fila">
+              <span>Correo</span>
+              <strong>{{ responsableForm.value.correo }}</strong>
+            </div>
+
+            <div class="fila">
+              <span>Usuario</span>
+              <strong>{{ responsableForm.value.usuario }}</strong>
+            </div>
+          </section>
+
+          <!-- UBICACIÓN -->
+          <section class="resumen-card">
+            <h3>Ubicación</h3>
+
+            <div class="fila">
+              <span>Tienda</span>
+              <strong>{{ ubicacionForm.value.tienda }}</strong>
+            </div>
+
+            <div class="fila">
+              <span>Estado</span>
+              <strong>{{ ubicacionForm.value.estado }}</strong>
+            </div>
+
+            <div class="fila">
+              <span>Ubicación</span>
+              <strong>{{ ubicacionForm.value.ubicacion }}</strong>
+            </div>
+          </section>
+
+          </div>
+          <!-- ACTIVOS -->
+          <section class="resumen-card activos-full">
+            <h3>Activos Asignados ({{ activosAgregados.length }})</h3>
+
+            <div class="tabla-wrapper">
+              <table class="tabla-activos">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Serial</th>
+                    <th>Placa</th>
+                    <th>Placa AX</th>
+                    <th>Tipo</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  @for (activo of activosAgregados; track $index) {
+                    <tr>
+                      <td>{{ $index + 1 }}</td>
+                      <td>{{ activo.serial }}</td>
+                      <td>{{ activo.placa }}</td>
+                      <td>{{ activo.placaAx }}</td>
+                      <td>{{ activo.tipo }}</td>
+                      <td>{{ activo.marca }}</td>
+                      <td>{{ activo.modelo }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+    
+      </div>
+      <div class="actions">
+        <button mat-button matStepperPrevious>Volver</button>
+        <button mat-stroked-button color="primary" (click)="agregarElemento()">+ Añadir Elemento</button>
+        <button mat-raised-button color="primary" (click)="confirmarGenerarActa()">Generar Acta</button>
+      </div>
+    </mat-step>
+  </mat-horizontal-stepper>
+</mat-card>

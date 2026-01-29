@@ -1,0 +1,71 @@
+<div class="inventory-page">
+
+  <!-- Header -->
+  <div class="inventory-header">
+    <h1>Inventario TI</h1>
+
+    <div class="header-actions">
+      <div class="search-box">
+        <span class="material-icons">search</span>
+        <input
+          type="text"
+          placeholder="Buscar por activo, serial o usuario..."
+          [(ngModel)]="searchTerm"
+          (input)="filtrarInventario()"
+        />
+      </div>
+
+      <button class="primary-btn">
+        <span class="material-icons">add</span>
+        Nuevo activo
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="inventory-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Activo</th>
+          <th>Tipo</th>
+          <th>Serial</th>
+          <th>Placa</th>
+          <th>Placa AX</th>
+          <th>Asignado a</th>
+          <th>Estado</th>
+          <th class="actions">Acciones</th>
+        </tr>
+      </thead>
+
+    <tbody>
+        @for (item of inventarioFiltrado; track item.id) {  <!-- Use @for instead of *ngFor; add 'track' for efficiency -->
+            <tr>
+            <td>{{ item.modelo }}</td>
+            <td>{{ item.tipo }}</td>
+            <td>{{ item.serial }}</td>
+            <td>{{ item.placa }}</td>
+            <td>{{ item.placaAx }}</td>
+            <td>{{ item.asignadoA || '-' }}</td>
+            <td>
+                <span class="status" [ngClass]="item.estado.toLowerCase()">
+                {{ item.estado }}
+                </span>
+            </td>
+            <td class="actions">
+                <button><span class="material-icons">visibility</span></button>
+                <button><span class="material-icons">edit</span></button>
+            </td>
+            </tr>
+        } @empty {  <!-- Use @empty instead of *ngIf -->
+            <tr>
+            <td colspan="6" class="empty">
+                No se encontraron resultados
+            </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+</div>

@@ -1,0 +1,51 @@
+<div class="app-layout" [class.dark]="darkMode" [class.collapsed]="sidebarCollapsed">
+
+  <!-- HEADER -->
+  <header class="header">
+    <button class="icon-btn" (click)="toggleSidebar()">
+      <span class="material-icons">menu</span>
+    </button>
+
+    <span class="app-title">ActasTI</span>
+
+    <div class="header-right">
+      <span class="user"><span class="material-icons">waving_hand</span> Hola Migue!</span>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <nav>
+      <a routerLink="/inicio" routerLinkActive="active">
+        <span class="material-icons">home</span>
+        <span class="text">Inicio</span>
+      </a>
+
+      <a routerLink="/inventario" routerLinkActive="active">
+        <span class="material-icons">inventory_2</span>
+        <span class="text">Inventario</span>
+      </a>
+
+      <a routerLink="/crear-acta" routerLinkActive="active">
+        <span class="material-icons">description</span>
+        <span class="text">Crear Acta</span>
+      </a>
+
+      <a routerLink="/listar-acta" routerLinkActive="active">
+        <span class="material-icons">history</span>
+        <span class="text">Movimientos</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="background-logo">
+      <img src="/logo.jpeg" alt="ActasTI">
+    </div>
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>
