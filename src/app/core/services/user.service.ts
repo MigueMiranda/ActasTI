@@ -7,10 +7,10 @@ import { USER_MOCK } from '../mocks/users.mock';
   providedIn: 'root',
 })
 export class UserService {
-  
+
   getByUsuario(usuario: string): UserModel | undefined {
     return USER_MOCK.find(
-      r => r.usuario.toLowerCase() === usuario.toLowerCase()
+      r => r.username.toLowerCase() === usuario.toLowerCase()
     );
   }
 

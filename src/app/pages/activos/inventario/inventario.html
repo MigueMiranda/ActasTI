@@ -1,71 +1,117 @@
 <div class="inventory-page">
-
-  <!-- Header -->
   <div class="inventory-header">
     <h1>Inventario TI</h1>
-
-    <div class="header-actions">
-      <div class="search-box">
-        <span class="material-icons">search</span>
-        <input
-          type="text"
-          placeholder="Buscar por activo, serial o usuario..."
-          [(ngModel)]="searchTerm"
-          (input)="filtrarInventario()"
-        />
+    <div class="header-filters">
+      <div class="filter-group">
+        <span class="material-icons">store</span>
+        <select (change)="updateFilter('tienda', $any($event.target).value)">
+          <option value="">Todas las tiendas</option>
+          @for (tienda of tiendas(); track tienda) {
+          <option value="{{ tienda }}">{{ tienda }}</option>
+          }
+        </select>
       </div>
 
+      <div class="filter-group">
+        <span class="material-icons">category</span>
+        <input type="text" placeholder="Serial..." (input)="updateFilter('serial', $any($event.target).value)">
+      </div>
+      <div class="filter-group">
+        <span class="material-icons">category</span>
+        <input type="text" placeholder="Placa..." (input)="updateFilter('placa', $any($event.target).value)">
+      </div>
+
+      <div class="filter-group">
+        <span class="material-icons">category</span>
+        <input type="text" placeholder="Fabricante..." (input)="updateFilter('fabricante', $any($event.target).value)">
+      </div>
+
+      <div class="filter-group">
+        <span class="material-icons">category</span>
+        <input type="text" placeholder="Modelo..." (input)="updateFilter('modelo', $any($event.target).value)">
+      </div>
+
+      <div class="filter-group">
+        <span class="material-icons">settings_suggest</span>
+        <select (change)="updateFilter('estado', $any($event.target).value)">
+          <option value="">Todos los estados</option>
+          @for (estado of estados(); track estado) {
+          <option value="{{ estado }}">{{ estado }}</option>
+          }
+        </select>
+      </div>
       <button class="primary-btn">
-        <span class="material-icons">add</span>
-        Nuevo activo
+        <span class="material-icons">table_chart</span> CSV
+      </button>
+      <button class="primary-btn"
+        (click)="updateFilter('tienda', ''); updateFilter('tipo', ''); updateFilter('estado', ''); updateFilter('serial', ''); updateFilter('placa', ''); updateFilter('fabricante', ''); updateFilter('modelo', ''); updateFilter('responsable', '')">
+        <span class="material-icons">table_chart</span> Borrar Filtros
       </button>
     </div>
   </div>
 
-  <!-- Tabla -->
   <div class="inventory-card">
+    <div class="stats">
+      <p>Total: <strong>{{ inventario().length }}</strong> | Filtrado: <strong>{{ inventarioFiltrado().length
+          }}</strong></p>
+    </div>
+
     <table>
       <thead>
         <tr>
-          <th>Activo</th>
-          <th>Tipo</th>
+          <th>Tienda</th>
           <th>Serial</th>
           <th>Placa</th>
-          <th>Placa AX</th>
-          <th>Asignado a</th>
+          <th>Tipo</th>
+          <th>Fabricante</th>
+          <th>Modelo</th>
+          <th>Responsable</th>
           <th>Estado</th>
-          <th class="actions">Acciones</th>
         </tr>
       </thead>
 
-    <tbody>
-        @for (item of inventarioFiltrado; track item.id) {  <!-- Use @for instead of *ngFor; add 'track' for efficiency -->
-            <tr>
-            <td>{{ item.modelo }}</td>
-            <td>{{ item.tipo }}</td>
-            <td>{{ item.serial }}</td>
-            <td>{{ item.placa }}</td>
-            <td>{{ item.placaAx }}</td>
-            <td>{{ item.asignadoA || '-' }}</td>
-            <td>
-                <span class="status" [ngClass]="item.estado.toLowerCase()">
-                {{ item.estado }}
-                </span>
-            </td>
-            <td class="actions">
-                <button><span class="material-icons">visibility</span></button>
-                <button><span class="material-icons">edit</span></button>
-            </td>
-            </tr>
-        } @empty {  <!-- Use @empty instead of *ngIf -->
-            <tr>
-            <td colspan="6" class="empty">
-                No se encontraron resultados
-            </td>
-            </tr>
+      <tbody>
+        @if (isLoading()) {
+        <tr>
+          <td colspan="8">Cargando...</td>
+        </tr>
+        } @else {
+        @for (item of paginatedData(); track item.serial) {
+        <tr>
+          <td>{{ item.tienda.nombre }}</td>
+          <td>{{ item.serial }}</td>
+          <td>{{ item.placa }}</td>
+          <td>{{ item.tipo }}</td>
+          <td>{{ item.fabricante }}</td>
+          <td>{{ item.modelo }}</td>
+          <td>{{ item.usuario.name }}</td>
+          <td>
+            <span class="status" [ngClass]="item.estado?.toLowerCase()">
+              {{ item.estado }}
+            </span>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="8">Sin resultados</td>
+        </tr>
         }
-        </tbody>
+        }
+      </tbody>
     </table>
-</div>
 
+    <div class="pagination-controls">
+      <span class="page-info">
+        Página <strong>{{ currentPage() }}</strong> de <strong>{{ totalPages() }}</strong>
+      </span>
+
+      <button class="pagi-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
+        <span class="material-icons">chevron_left</span>
+      </button>
+
+      <button class="pagi-btn" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">
+        <span class="material-icons">chevron_right</span>
+      </button>
+    </div>
+  </div>
 </div>

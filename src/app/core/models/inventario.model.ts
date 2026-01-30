@@ -1,11 +1,20 @@
 export interface InventarioModel {
-  id: number;
-  modelo: string;
-  tipo: 'Laptop' | 'Monitor' | 'Móvil' | 'Otro';
-  serial: string;
+  serial: string;          // PK real
   placa: string;
-  placaAx: string;
-  asignadoA: string | null;
-  estado: 'Asignado' | 'Disponible' | 'Mantenimiento';
-  marca: string;
+  tipo: string;
+  fabricante: string;
+  modelo: string;
+  estado?: string;
+  responsable: string;
+  hostname: string;
+  tienda: {
+    tienda_id: number,
+    nombre: string
+  };
+  usuario: {
+    id: number,
+    name: string,
+    username: string,
+    cargo: string
+  }
 }

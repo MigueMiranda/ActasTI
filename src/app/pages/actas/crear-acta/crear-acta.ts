@@ -56,10 +56,10 @@ export class CrearActaComponent {
     private tiendaEstadoService: TiendaEstadoService
   ) {
     this.responsableForm = this.fb.group({
-      cedula: [{value:'', disabled: true}, Validators.required],
-      nombre: [{value:'', disabled: true}, Validators.required],
-      cargo: [{value:'', disabled: true}, Validators.required],
-      correo: [{value:'', disabled: true}, Validators.required],
+      cedula: [{ value: '', disabled: true }, Validators.required],
+      nombre: [{ value: '', disabled: true }, Validators.required],
+      cargo: [{ value: '', disabled: true }, Validators.required],
+      correo: [{ value: '', disabled: true }, Validators.required],
       usuario: ['', Validators.required],
     });
 
@@ -92,17 +92,17 @@ export class CrearActaComponent {
 
         if (dataUsuario) {
           this.responsableForm.patchValue({
-            nombre: dataUsuario.nombre,
-            cedula: dataUsuario.cedula,
+            nombre: dataUsuario.name,
+            cedula: dataUsuario.id,
             cargo: dataUsuario.cargo,
             correo: dataUsuario.correo
           },
-          { emitEvent: false}
-        );
-        this.responsableForm.get('nombre')!.disable({ emitEvent: false });
-        this.responsableForm.get('cedula')!.disable({ emitEvent: false });
-        this.responsableForm.get('cargo')!.disable({ emitEvent: false });
-        this.responsableForm.get('correo')!.disable({ emitEvent: false });
+            { emitEvent: false }
+          );
+          this.responsableForm.get('nombre')!.disable({ emitEvent: false });
+          this.responsableForm.get('cedula')!.disable({ emitEvent: false });
+          this.responsableForm.get('cargo')!.disable({ emitEvent: false });
+          this.responsableForm.get('correo')!.disable({ emitEvent: false });
         }
       });
     const dataBorrador = localStorage.getItem('acta_borrador');
@@ -141,8 +141,8 @@ export class CrearActaComponent {
 
     if (responsable) {
       this.responsableForm.patchValue({
-        nombre: responsable.nombre,
-        cedula: responsable.cedula,
+        nombre: responsable.name,
+        cedula: responsable.id,
         cargo: responsable.cargo,
         correo: responsable.correo
       });
@@ -189,8 +189,8 @@ export class CrearActaComponent {
         placa: activo.placa,
         placaax: activo.placaAx
       },
-      { emitEvent: false } 
-    );
+        { emitEvent: false }
+      );
     } else if (campoBuscado === 'placa') {
       // Autocompletar datos
       this.activosForm.patchValue({
@@ -200,8 +200,8 @@ export class CrearActaComponent {
         serial: activo.serial,
         placaax: activo.placaAx
       },
-      { emitEvent: false } 
-    );
+        { emitEvent: false }
+      );
     } else {
       // Autocompletar datos
       this.activosForm.patchValue({
@@ -211,8 +211,8 @@ export class CrearActaComponent {
         placa: activo.placa,
         serial: activo.serial
       },
-      { emitEvent: false } 
-  );
+        { emitEvent: false }
+      );
     }
 
     console.log('Activo cargado en el formulario', this.activosForm.value);

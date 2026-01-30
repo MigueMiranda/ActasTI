@@ -1,7 +1,7 @@
 export interface UserModel {
-  cedula: number;
-  nombre: string;
+  id: number;
+  name: string;
   cargo: string;
   correo: string;
-  usuario: string;
+  username: string;
 }
