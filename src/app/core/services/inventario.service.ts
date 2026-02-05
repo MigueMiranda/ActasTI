@@ -14,18 +14,12 @@ export class InventarioService {
   private apiUrl = `${environment.API_URL}/elementos`;
 
   getInventario() {
-    return this.http
-      .get<InventarioModel[]>(this.apiUrl, {
-        headers: {
-          'Cache-Control': 'no-cache',
-          Pragma: 'no-cache'
-        }
-      })
+    return this.http.get<InventarioModel[]>(this.apiUrl)
   }
 
 
 
-  buscarPorCampo(valor: string, campo: 'serial' | 'placa' | 'placaAx'): Observable<InventarioModel> | undefined {
+  buscarPorCampo(valor: string, campo: 'serial' | 'placa'): Observable<InventarioModel> {
     return this.http.get<InventarioModel>(`${this.apiUrl}/${campo}/${valor}`);
   }
 }

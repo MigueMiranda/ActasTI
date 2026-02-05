@@ -1,25 +1,21 @@
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatStepperModule } from '@angular/material/stepper';
+import { Component, OnInit, OnDestroy, ViewChild, signal, inject } from '@angular/core';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { switchMap, catchError, debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { MatListModule } from '@angular/material/list';
-import { MatCardModule } from '@angular/material/card';
-import { ReactiveFormsModule } from '@angular/forms';
-import { ViewChild } from '@angular/core';
-import { MatStepper } from '@angular/material/stepper';
-import { MatDialog } from '@angular/material/dialog';
-import { Dialog } from '../../../components/dialog/dialog';
 import { MatSelectModule } from '@angular/material/select';
-
+import { MatCardModule } from '@angular/material/card';
+import { of, Subject } from 'rxjs'
+import { FormControl } from '@angular/forms';
 
 import { UserService } from '../../../core/services/user.service';
 import { InventarioService } from '../../../core/services/inventario.service';
 import { TiendaEstadoService } from '../../../core/services/tienda-estado.service';
-import { TiendaModel, EstadoModel } from '../../../core/models/tienda-estado.model';
-
-
+import { ActasService } from '../../../core/services/actas.service';
+import { Dialog } from '../../../components/dialog/dialog';
 
 @Component({
   standalone: true,
@@ -32,269 +28,250 @@ import { TiendaModel, EstadoModel } from '../../../core/models/tienda-estado.mod
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatListModule,
     MatCardModule,
     MatSelectModule
   ]
 })
-export class CrearActaComponent {
+export class CrearActaComponent implements OnInit, OnDestroy {
   @ViewChild('stepper') stepper!: MatStepper;
 
-  responsableForm: FormGroup;
-  activosForm: FormGroup;
-  ubicacionForm: FormGroup;
+  private fb = inject(FormBuilder);
+  private dialog = inject(MatDialog);
+  private userService = inject(UserService);
+  private inventarioService = inject(InventarioService);
+  private tiendaEstadoService = inject(TiendaEstadoService);
+  private actasService = inject(ActasService);
 
-  activosAgregados: any[] = [];
-  tiendas: TiendaModel[] = [];
-  estados: EstadoModel[] = []
+  // Signals para reactividad inmediata
+  activosAgregados = signal<any[]>([]);
+  tiendas = signal<any[]>([]);
+  estados = this.tiendaEstadoService.estados;
+  private destroy$ = new Subject<void>();
 
-  constructor(
-    private fb: FormBuilder,
-    private dialog: MatDialog,
-    private userService: UserService,
-    private inventarioService: InventarioService,
-    private tiendaEstadoService: TiendaEstadoService
-  ) {
-    this.responsableForm = this.fb.group({
-      cedula: [{ value: '', disabled: true }, Validators.required],
-      nombre: [{ value: '', disabled: true }, Validators.required],
-      cargo: [{ value: '', disabled: true }, Validators.required],
-      correo: [{ value: '', disabled: true }, Validators.required],
-      usuario: ['', Validators.required],
-    });
+  responsableForm = this.fb.group({
+    usuario: ['', Validators.required],
+    cedula: [{ value: '', disabled: true }, Validators.required],
+    nombre: [{ value: '', disabled: true }, Validators.required],
+    cargo: [{ value: '', disabled: true }, Validators.required],
+    correo: [{ value: '', disabled: true }, Validators.required],
+  });
 
-    this.activosForm = this.fb.group({
-      serial: ['', Validators.required],
-      placa: ['', Validators.required],
-      placaAx: ['', Validators.required],
-      tipo: [{ value: '', disabled: true }, Validators.required],
-      marca: [{ value: '', disabled: true }, Validators.required],
-      modelo: [{ value: '', disabled: true }, Validators.required],
-    });
+  activosForm = this.fb.group({
+    serial: ['', Validators.required],
+    placa: ['', Validators.required],
+    tipo: [{ value: '', disabled: true }, Validators.required],
+    marca: [{ value: '', disabled: true }, Validators.required],
+    modelo: [{ value: '', disabled: true }, Validators.required],
+  });
 
-    this.ubicacionForm = this.fb.group({
-      tienda: [''],
-      estado: [''],
-      ubicacion: [''],
-    });
-  }
+  ubicacionForm = this.fb.group({
+    tiendaId: [null, Validators.required],
+    estado: ['', Validators.required],
+    ubicacion: ['', Validators.required],
+  });
 
   ngOnInit() {
-    this.escucharCampo('serial');
-    this.escucharCampo('placa');
-    this.escucharCampo('placaAx');
+    this.cargarListas();
+    this.cargarInventario();
+    this.setupListeners();
+    this.recuperarBorrador();
+  }
 
-    this.responsableForm
-      .get('usuario')!
-      .valueChanges
-      .subscribe(usuario => {
-        const dataUsuario = this.buscarResponsable(usuario);
+  cargarListas() {
+    this.tiendaEstadoService.getTienda().subscribe({
+      next: (data) => this.tiendas.set(data),
+      error: (err) => console.error('Error cargando tiendas:', err)
+    });
+  }
 
-        if (dataUsuario) {
+  cargarInventario() {
+    this.inventarioService.getInventario().subscribe({
+      next: data => this.tiendaEstadoService.inventario.set(data),
+      error: err => console.error('❌ Error cargando inventario:', err)
+    });
+  }
+
+  get nombreTiendaSeleccionada(): string {
+    const tiendaId = this.ubicacionForm.get('tiendaId')?.value;
+    if (!tiendaId) return '';
+
+    return this.tiendas().find(t => t.id === tiendaId)?.nombre ?? '';
+  }
+
+  setupListeners() {
+    // Busqueda Responsable
+    this.responsableForm.get('usuario')?.valueChanges
+      .pipe(
+        debounceTime(500),
+        distinctUntilChanged(),
+        switchMap(usuario =>
+          this.userService.getByUsername(usuario!).pipe(
+            catchError(() => of(null)) // Manejo de error, retorna null si falla
+          )
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(data => {
+        if (data) {
           this.responsableForm.patchValue({
-            nombre: dataUsuario.name,
-            cedula: dataUsuario.id,
-            cargo: dataUsuario.cargo,
-            correo: dataUsuario.correo
-          },
-            { emitEvent: false }
+            nombre: data.name,
+            cedula: String(data.id),
+            cargo: data.cargo,
+            correo: data.correo
+          });
+        }
+      });
+
+    // Busqueda Activos (Serial y Placa)
+    this.escucharCampoActivo('serial');
+    this.escucharCampoActivo('placa');
+  }
+
+  escucharCampoActivo(campo: 'serial' | 'placa') {
+    const control = this.activosForm.get(campo) as FormControl | null;
+    if (!control) return;
+
+    control.valueChanges
+      .pipe(
+        filter((val): val is string => typeof val === 'string' && val.length > 3),
+        debounceTime(400),
+        distinctUntilChanged(),
+        switchMap((valor: string) => {
+          console.log(`🔍 Buscando ${campo}:`, valor);
+          if (control.disabled) {
+            console.warn(`⚠️ Campo ${campo} está deshabilitado`);
+            return of(null);
+          }
+          return this.inventarioService.buscarPorCampo(valor, campo).pipe(
+            catchError((err) => {
+              console.error(`❌ Error buscando ${campo} "${valor}":`, err);
+              console.error('Status:', err.status);
+              console.error('URL esperada:', `/elementos/${campo}/${valor}`);
+              return of(null);
+            })
           );
-          this.responsableForm.get('nombre')!.disable({ emitEvent: false });
-          this.responsableForm.get('cedula')!.disable({ emitEvent: false });
-          this.responsableForm.get('cargo')!.disable({ emitEvent: false });
-          this.responsableForm.get('correo')!.disable({ emitEvent: false });
-        }
-      });
-    const dataBorrador = localStorage.getItem('acta_borrador');
-    if (!dataBorrador) return;
-
-    const borrador = JSON.parse(dataBorrador);
-
-    this.responsableForm.patchValue(borrador.responsable);
-    this.ubicacionForm.patchValue({
-      tienda: borrador.ubicacion.tienda,
-      estado: borrador.ubicacion.estado,
-      ubicacion: borrador.ubicacion.ubicacion
-    });
-    this.activosAgregados = borrador.activos || [];
-
-    if (this.activosAgregados.length > 0) {
-      this.responsableForm.disable();
-    }
-
-    console.log(this.tiendas = this.tiendaEstadoService.getTienda());
-    console.log(this.estados = this.tiendaEstadoService.getEstado());
-  }
-
-  buscarResponsable(usuario: string) {
-    if (!usuario) {
-      this.responsableForm.patchValue({
-        nombre: '',
-        cedula: '',
-        cargo: '',
-        correo: ''
-      });
-      return;
-    }
-
-    const responsable = this.userService.getByUsuario(usuario);
-
-    if (responsable) {
-      this.responsableForm.patchValue({
-        nombre: responsable.name,
-        cedula: responsable.id,
-        cargo: responsable.cargo,
-        correo: responsable.correo
-      });
-    }
-
-    return responsable;
-  }
-
-  escucharCampo(campo: 'serial' | 'placa' | 'placaAx') {
-    this.activosForm.get(campo)!
-      .valueChanges
-      .subscribe(valor => {
-
-        if (!valor || valor.length < 3) return;
-
-        // ⛔ Evitar buscar si el campo está deshabilitado
-        if (this.activosForm.get(campo)?.disabled) return;
-
-        const activo = this.inventarioService.buscarPorCampo(valor, campo);
-        console.log('Activo encontrado:', activo);
-
-        if (activo) {
-          this.cargarActivo(activo, campo);
-        }
-        return activo;
-      });
-  }
-
-  resetActivosForm() {
-    this.activosForm.reset();
-
-    ['serial', 'placa', 'placaax'].forEach(campo => {
-      this.activosForm.get(campo)?.enable({ emitEvent: false });
-    });
-  }
-
-  cargarActivo(activo: any, campoBuscado: 'serial' | 'placa' | 'placaAx') {
-    if (campoBuscado === 'serial') {
-      // Autocompletar datos
-      this.activosForm.patchValue({
-        tipo: activo.tipo,
-        marca: activo.marca,
-        modelo: activo.modelo,
-        placa: activo.placa,
-        placaax: activo.placaAx
-      },
-        { emitEvent: false }
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(
+        activo => {
+          if (activo) {
+            console.log(`✅ Resultado encontrado para ${campo}:`, activo);
+            this.autocompletarActivo(activo, campo);
+          } else {
+            console.warn(`⚠️ No se encontró resultado para ${campo}`);
+          }
+        },
+        err => console.error('Error en subscribe:', err)
       );
-    } else if (campoBuscado === 'placa') {
-      // Autocompletar datos
-      this.activosForm.patchValue({
-        tipo: activo.tipo,
-        marca: activo.marca,
-        modelo: activo.modelo,
-        serial: activo.serial,
-        placaax: activo.placaAx
-      },
-        { emitEvent: false }
-      );
+  }
+
+
+
+
+  autocompletarActivo(activo: any, campoTrigger: string) {
+    this.activosForm.patchValue({
+      tipo: activo.tipo,
+      marca: activo.fabricante,
+      modelo: activo.modelo,
+      serial: activo.serial,
+      placa: activo.placa
+    }, { emitEvent: false });
+
+    // Bloquear el campo contrario para evitar conflictos
+    if (campoTrigger === 'serial') {
+      this.activosForm.get('placa')?.disable({ emitEvent: false });
+      this.activosForm.get('serial')?.enable({ emitEvent: false });
     } else {
-      // Autocompletar datos
-      this.activosForm.patchValue({
-        tipo: activo.tipo,
-        marca: activo.marca,
-        modelo: activo.modelo,
-        placa: activo.placa,
-        serial: activo.serial
-      },
-        { emitEvent: false }
-      );
+      this.activosForm.get('serial')?.disable({ emitEvent: false });
+      this.activosForm.get('placa')?.enable({ emitEvent: false });
     }
-
-    console.log('Activo cargado en el formulario', this.activosForm.value);
-
-    // Habilitar SOLO el campo usado
-    ['serial', 'placa', 'placaAx'].forEach(campo => {
-      if (campo === campoBuscado) {
-        this.activosForm.get(campo)?.enable({ emitEvent: false });
-      } else {
-        this.activosForm.get(campo)?.disable({ emitEvent: false });
-      }
-    });
   }
 
-
-
-  /** Guarda el activo y avanza a Ubicación */
   guardarActivoYContinuar() {
     if (this.activosForm.invalid) return;
 
-    this.activosAgregados.push({ ...this.activosForm.value });
+    // Usamos update en el signal
+    this.activosAgregados.update(prev => [...prev, this.activosForm.getRawValue()]);
 
-    // Bloquear responsable solo una vez
-    if (this.activosAgregados.length === 1) {
+    if (this.activosAgregados().length === 1) {
       this.responsableForm.disable();
     }
 
     this.guardarBorrador();
-
-    console.log('Activo agregado:', this.activosAgregados);
-    console.log('Formulario activo:', this.activosForm.value);
-
     this.stepper.next();
   }
 
-  /** Permite agregar otro activo */
   agregarElemento() {
     this.activosForm.reset();
-    this.stepper.selectedIndex = 1;
+    this.activosForm.enable();
+    this.stepper.selectedIndex = 1; // Volver al paso de activos
   }
 
   confirmarGenerarActa() {
     const dialogRef = this.dialog.open(Dialog, {
       width: '400px',
-      data: {
-        totalActivos: this.activosAgregados.length
-      }
+      data: { totalActivos: this.activosAgregados().length }
     });
 
-    dialogRef.afterClosed().subscribe(confirmado => {
-      if (confirmado) {
-        this.crearActa();
+    dialogRef.afterClosed().subscribe(res => {
+      if (res) this.crearActaFinal();
+    });
+  }
+
+  crearActaFinal() {
+    const payload = {
+      responsable: this.responsableForm.getRawValue(),
+      activos: this.activosAgregados(),
+      ubicacion: this.ubicacionForm.value
+    };
+
+    console.log('📤 Enviando acta con payload:', payload);
+
+    this.actasService.notificarActa(payload).subscribe({
+      next: (res) => {
+        console.log('✅ Acta enviada:', res);
+        this.resetFormulario();
+      },
+      error: (err) => {
+        console.error('❌ Error enviando acta:', err);
       }
     });
   }
+
+  private resetFormulario() {
+    localStorage.removeItem('acta_borrador');
+    this.stepper.reset();
+    this.activosAgregados.set([]);
+    this.responsableForm.enable();
+    this.activosForm.enable();
+  }
+
+
 
   guardarBorrador() {
     const borrador = {
       responsable: this.responsableForm.getRawValue(),
-      activos: this.activosAgregados,
+      activos: this.activosAgregados(),
       ubicacion: this.ubicacionForm.value
     };
-
     localStorage.setItem('acta_borrador', JSON.stringify(borrador));
   }
 
-  /** Genera el objeto final del acta */
-  crearActa() {
-    const actaFinal = {
-      responsable: this.responsableForm.getRawValue(),
-      activos: this.activosAgregados,
-      ubicacion: this.ubicacionForm.value,
-    };
+  recuperarBorrador() {
+    const data = localStorage.getItem('acta_borrador');
+    if (!data) return;
 
-    this.activosForm.reset();
-    this.responsableForm.reset();
-    this.responsableForm.enable();
-    this.ubicacionForm.reset();
-    this.activosAgregados = [];
-    this.stepper.reset();
-    localStorage.removeItem('acta_borrador');
+    const borrador = JSON.parse(data);
+    this.responsableForm.patchValue(borrador.responsable);
+    this.ubicacionForm.patchValue(borrador.ubicacion);
+    this.activosAgregados.set(borrador.activos || []);
 
-    console.log('Acta creada:', actaFinal);
+    if (this.activosAgregados().length > 0) this.responsableForm.disable();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

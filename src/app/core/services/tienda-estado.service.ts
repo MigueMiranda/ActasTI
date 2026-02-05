@@ -1,20 +1,29 @@
-import { Injectable } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from './../../../environments/environment';
 
 import { TiendaModel, EstadoModel } from '../models/tienda-estado.model';
-import { TIENDA_MOCK, ESTADO_MOCK } from '../mocks/tienda-estado.mock';
+import { InventarioModel } from '../models/inventario.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TiendaEstadoService {
+  private http = inject(HttpClient);
+  private apiUrl = environment.API_URL;
 
-  getTienda(): TiendaModel[] {
-    return TIENDA_MOCK;
-  }
+  public inventario = signal<InventarioModel[]>([]);
 
-  getEstado(): EstadoModel[] {
-    return ESTADO_MOCK;
+
+
+  public estados = computed(() => {
+    const estados = this.inventario()
+      .map(item => item.estado)
+      .filter(Boolean);
+    return [...new Set(estados)].sort();
+  });
+
+  getTienda() {
+    return this.http.get<TiendaModel[]>(`${this.apiUrl}/tiendas`)
   }
-  
-  
 }

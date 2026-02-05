@@ -1,6 +1,5 @@
 <div class="inventory-page">
   <div class="inventory-header">
-    <h1>Inventario TI</h1>
     <div class="header-filters">
       <div class="filter-group">
         <span class="material-icons">store</span>
@@ -15,6 +14,11 @@
       <div class="filter-group">
         <span class="material-icons">category</span>
         <input type="text" placeholder="Serial..." (input)="updateFilter('serial', $any($event.target).value)">
+      </div>
+      <div class="filter-group">
+        <span class="material-icons">category</span>
+        <input type="text" placeholder="Responsable..."
+          (input)="updateFilter('responsable', $any($event.target).value)">
       </div>
       <div class="filter-group">
         <span class="material-icons">category</span>
@@ -66,6 +70,7 @@
           <th>Fabricante</th>
           <th>Modelo</th>
           <th>Responsable</th>
+          <th>Ubicacion</th>
           <th>Estado</th>
         </tr>
       </thead>
@@ -85,6 +90,7 @@
           <td>{{ item.fabricante }}</td>
           <td>{{ item.modelo }}</td>
           <td>{{ item.usuario.name }}</td>
+          <td>{{ item.ubicacion }}</td>
           <td>
             <span class="status" [ngClass]="item.estado?.toLowerCase()">
               {{ item.estado }}

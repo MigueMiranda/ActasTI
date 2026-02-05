@@ -1,0 +1,26 @@
+<div class="contenedor">
+
+    @if (estado === 'cargando') {
+    <div>
+        <h2>⏳ Procesando asignación...</h2>
+        <p>Por favor espera un momento</p>
+    </div>
+    }
+
+    @if (estado === 'exito') {
+    <div class="exito">
+        <div class="icon">✅</div>
+        <h2>¡Operación Exitosa!</h2>
+        <p class="msg-detalle">{{ mensaje }}</p>
+    </div>
+    }
+
+    @if (estado === 'error') {
+    <div class="error">
+        <div class="icon">❌</div>
+        <h2>No se pudo procesar</h2>
+        <p class="msg-detalle">{{ mensaje }}</p>
+    </div>
+    }
+
+</div>

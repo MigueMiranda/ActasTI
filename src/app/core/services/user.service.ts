@@ -1,17 +1,24 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from './../../../environments/environment';
+import { Observable, tap } from 'rxjs';
 
 import { UserModel } from './../models/users.model';
-import { USER_MOCK } from '../mocks/users.mock';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
 
-  getByUsuario(usuario: string): UserModel | undefined {
-    return USER_MOCK.find(
-      r => r.username.toLowerCase() === usuario.toLowerCase()
-    );
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.API_URL}/users`;
+
+  getAll() {
+    return this.http.get<UserModel[]>(this.apiUrl)
+  }
+
+  getByUsername(username: string): Observable<UserModel> {
+    return this.http.get<UserModel>(`${this.apiUrl}/${username}`);
   }
 
 }

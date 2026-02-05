@@ -75,6 +75,7 @@ export class InventarioComponent implements OnInit {
         // Asegúrate que 'data' sea el array. Si el backend envía { data: [...] }, usa data.data
         this.inventario.set(Array.isArray(data) ? data : []);
         this.isLoading.set(false);
+        console.log('✅ Inventario cargado:', this.inventario());
       },
       error: (err) => {
         console.error('🔴 Error:', err);

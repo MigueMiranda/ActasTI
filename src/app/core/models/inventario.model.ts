@@ -7,6 +7,7 @@ export interface InventarioModel {
   estado?: string;
   responsable: string;
   hostname: string;
+  ubicacion: string;
   tienda: {
     tienda_id: number,
     nombre: string

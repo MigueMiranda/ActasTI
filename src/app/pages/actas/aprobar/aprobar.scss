@@ -1,0 +1,15 @@
+.contenedor {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.exito {
+    color: #2e7d32;
+}
+
+.error {
+    color: #c62828;
+}
