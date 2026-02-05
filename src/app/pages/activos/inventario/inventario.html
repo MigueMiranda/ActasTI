@@ -54,13 +54,13 @@
     </div>
   </div>
 
-  <div class="inventory-card">
+  <div>
     <div class="stats">
       <p>Total: <strong>{{ inventario().length }}</strong> | Filtrado: <strong>{{ inventarioFiltrado().length
           }}</strong></p>
     </div>
 
-    <table>
+    <table class="tabla">
       <thead>
         <tr>
           <th>Tienda</th>
@@ -106,7 +106,7 @@
       </tbody>
     </table>
 
-    <div class="pagination-controls">
+    <div class="paginacion">
       <span class="page-info">
         Página <strong>{{ currentPage() }}</strong> de <strong>{{ totalPages() }}</strong>
       </span>
