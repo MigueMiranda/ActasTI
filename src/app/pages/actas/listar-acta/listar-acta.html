@@ -1,1 +1,55 @@
-<p>listar-acta works!</p>
+<div class="container">
+    <h2>Historial de Movimientos</h2>
+
+    <table class="tabla-actas">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tienda</th>
+                <th>Serial</th>
+                <th>Responsable</th>
+                <th>Estado Asignación</th>
+                <th>Ubicación</th>
+                <th>Actas</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (mov of movimientosPaginados(); track mov.id) {
+            <tr>
+                <td>{{ mov.id }}</td>
+                <td>{{ mov.elemento.tienda?.nombre }}</td>
+                <td><strong>{{ mov.serial }}</strong></td>
+                <td>{{ mov.users.name }}</td>
+                <td>
+                    <span [class]="'badge ' + mov.estadoAsignacion">
+                        {{ mov.estadoAsignacion | uppercase }}
+                    </span>
+                </td>
+                <td>{{ mov.ubicacionElemento }}</td>
+                <td>
+                    @if (mov.acta && mov.acta !== 'N/A' && mov.acta !== 'pendiente') {
+                    <button class="btn-pdf" (click)='verActa(mov.acta)'>
+                        <span class="material-icons">picture_as_pdf</span>
+                    </button>
+                    } @else {
+                    <span class="no-acta">Sin acta</span>
+                    }
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="paginacion">
+        <span class="page-info">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
+
+        <button class="pagi-btn" [disabled]="paginaActual() === 1" (click)="cambiarPagina(paginaActual() - 1)">
+            <span class="material-icons">chevron_left</span>
+        </button>
+
+        <button class="pagi-btn" [disabled]="paginaActual() === totalPaginas()"
+            (click)="cambiarPagina(paginaActual() + 1)">
+            <span class="material-icons">chevron_right</span>
+        </button>
+    </div>
+</div>
