@@ -161,6 +161,73 @@ $text-muted: #666;
   }
 }
 
+.dashboard {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  .filter-bar {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+
+    mat-form-field {
+      width: 300px;
+      margin-bottom: -1.25em; // Alineación para Angular Material
+    }
+  }
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+
+    .kpi {
+      text-align: center;
+      padding: 20px;
+
+      h4 {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      strong {
+        font-size: 2rem;
+        color: #0066b3;
+      }
+    }
+  }
+
+  .filter-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px; // Espacio entre los selects
+    padding: 16px;
+    flex-wrap: wrap; // Para móviles
+
+    mat-form-field {
+      min-width: 200px;
+    }
+  }
+
+  .charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+
+    mat-card {
+      padding: 15px;
+
+      h3 {
+        margin-bottom: 15px;
+        text-align: center;
+      }
+    }
+  }
+}
+
 .tabla {
   width: 100%;
   border-collapse: collapse;
@@ -227,6 +294,11 @@ $text-muted: #666;
   &.obsoleto {
     background: #e5e7eb;
     color: #374151;
+  }
+
+  &.enprestamo {
+    background: #e0f2fe;
+    color: #0c4666;
   }
 }
 

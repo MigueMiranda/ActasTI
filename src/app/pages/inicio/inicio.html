@@ -1,55 +1,66 @@
 <div class="dashboard">
 
-  <!-- KPIs -->
+  <mat-card class="filter-bar">
+    <mat-form-field appearance="outline">
+      <mat-label>Filtrar por Tienda</mat-label>
+      <mat-select (selectionChange)="onTiendaChange($event.value)">
+        <mat-option [value]="null">Todas las tiendas</mat-option>
+        @for (tienda of tiendas(); track tienda.id) {
+        <mat-option [value]="tienda.id">{{ tienda.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Filtrar por Estado</mat-label>
+      <mat-select multiple (selectionChange)="onEstadoChange($event.value)">
+        @for (estado of estados(); track estado) {
+        <mat-option [value]="estado">{{ estado }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Filtrar por tipo</mat-label>
+      <mat-select multiple (selectionChange)="onTipoChange($event.value)">
+        @for (tipo of tipos(); track tipo) {
+        <mat-option [value]="tipo">{{ tipo }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </mat-card>
+
   <div class="kpis">
     <mat-card class="kpi">
-      <h4>Actas</h4>
-      <strong>120</strong>
+      <h4>Actas (Filtradas)</h4>
+      <strong>{{ totalActas() }}</strong>
     </mat-card>
-
     <mat-card class="kpi">
       <h4>Activos</h4>
-      <strong>340</strong>
+      <strong>{{ totalActivos() }}</strong>
     </mat-card>
-
     <mat-card class="kpi">
       <h4>Disponibles</h4>
-      <strong>85</strong>
+      <strong>{{ disponibles() }}</strong>
     </mat-card>
-
     <mat-card class="kpi">
       <h4>Responsables</h4>
-      <strong>42</strong>
+      <strong>{{ responsables() }}</strong>
     </mat-card>
   </div>
 
-  <!-- Gráficas -->
   <div class="charts">
-
     <mat-card>
       <h3>Actas por mes</h3>
-      <canvas baseChart
-        [data]="lineChartData"
-        [options]="lineChartOptions"
-        chartType="line">
-      </canvas>
+      <canvas baseChart [data]="lineChartData" type="line"></canvas>
     </mat-card>
-
     <mat-card>
       <h3>Activos por tipo</h3>
-      <canvas baseChart
-        [data]="pieChartData"
-        [type]="pieChartType">
-      </canvas>
+      <canvas baseChart [data]="pieChartData" type="pie"></canvas>
     </mat-card>
-
     <mat-card>
       <h3>Estado de activos</h3>
-      <canvas baseChart
-        [data]="barChartData"
-        [type]="barChartType">
-      </canvas>
+      <canvas baseChart [data]="barChartData" type="bar"></canvas>
     </mat-card>
-
   </div>
 </div>
