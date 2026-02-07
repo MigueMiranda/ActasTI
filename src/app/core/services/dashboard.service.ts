@@ -13,7 +13,7 @@ export class DashboardService {
     private http: HttpClient
   ) { }
 
-  getStats(filter: { tiendaId?: number | null, estados?: string[] }) {
+  getStats(filter: { tiendaId?: number | null, estados?: string[], tipos?: string[] }) {
     let params = new HttpParams();
 
     if (filter.tiendaId) {
@@ -23,6 +23,12 @@ export class DashboardService {
     if (filter.estados && filter.estados.length > 0) {
       filter.estados.forEach(estado => {
         params = params.append('estados', estado);
+      });
+    }
+
+    if (filter.tipos && filter.tipos.length > 0) {
+      filter.tipos.forEach(tipo => {
+        params = params.append('tipos', tipo);
       });
     }
     return this.http.get<any>(`${this.apiUrl}/stats`, { params });

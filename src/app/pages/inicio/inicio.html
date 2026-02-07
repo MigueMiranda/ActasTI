@@ -20,6 +20,7 @@
       </mat-select>
     </mat-form-field>
 
+    <!-- ✅ CORREGIDO: Mantiene multiple -->
     <mat-form-field appearance="outline">
       <mat-label>Filtrar por tipo</mat-label>
       <mat-select multiple (selectionChange)="onTipoChange($event.value)">
@@ -52,15 +53,21 @@
   <div class="charts">
     <mat-card>
       <h3>Actas por mes</h3>
-      <canvas baseChart [data]="lineChartData" type="line"></canvas>
+      <canvas baseChart [data]="lineChartData" [type]="lineChartType" [options]="lineChartOptions">
+      </canvas>
     </mat-card>
+
+    <!-- ✅ CORREGIDO: Cambiado a polarArea -->
     <mat-card>
       <h3>Activos por tipo</h3>
-      <canvas baseChart [data]="pieChartData" type="pie"></canvas>
+      <canvas baseChart [data]="pieChartData" [type]="polarAreaChartType" [options]="polarAreaChartOptions">
+      </canvas>
     </mat-card>
+
     <mat-card>
       <h3>Estado de activos</h3>
-      <canvas baseChart [data]="barChartData" type="bar"></canvas>
+      <canvas baseChart [data]="barChartData" [type]="barChartType" [options]="barChartOptions">
+      </canvas>
     </mat-card>
   </div>
 </div>
