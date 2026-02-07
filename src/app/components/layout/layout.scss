@@ -27,8 +27,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  background: linear-gradient(180deg, #0066b3, #004a87);
-  color: #fff;
+  background: #ffffff;
+  color: var(--text);
 }
 
 .icon-btn {
@@ -47,12 +47,12 @@
 
 /* SIDEBAR */
 .sidebar {
-  background: linear-gradient(180deg, #0066b3, #004a87);
-  color: #fff;
+  background: #ffffff;
+  color: var(--text);
   padding: 16px;
-  transition: 
+  transition:
     width 0.3s ease;
-    background: 0.3s ease;
+  background: 0.3s ease;
 }
 
 .sidebar nav a {
@@ -68,7 +68,7 @@
 }
 
 .sidebar nav a:hover {
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 /* COLLAPSED */
@@ -80,8 +80,8 @@
 }
 
 .collapsed .header {
-    background: #ffffff;
-    color: var(--text);
+  background: #ffffff;
+  color: var(--text);
 }
 
 .collapsed .text {
