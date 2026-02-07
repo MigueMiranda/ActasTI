@@ -39,8 +39,17 @@ export class Aprobar implements OnInit {
       },
       error: (err) => {
         this.estado = 'error';
-        this.mensaje = err?.error?.mensaje || err?.message || 'Ocurrió un error al procesar la asignación.';
-        console.error('Detalle técnico del error:', err)
+
+        if (err?.error?.estado === 'invalido') {
+          this.mensaje =
+            'Token inválido o ya utilizado. Verifica el enlace.';
+          return;
+        }
+
+        this.mensaje =
+          err?.error?.message ||
+          err?.message ||
+          'Ocurrió un error al procesar la asignación.';
         this.cdr.detectChanges();
       }
     });
