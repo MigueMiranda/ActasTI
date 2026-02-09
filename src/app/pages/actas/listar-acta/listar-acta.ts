@@ -4,7 +4,9 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-listar-acta',
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+  ],
   templateUrl: './listar-acta.html',
   styleUrl: './listar-acta.scss',
 })
@@ -34,7 +36,10 @@ export class ListarActa implements OnInit {
 
   cargarMovimientos() {
     this.actasService.getMovimientos().subscribe({
-      next: (data) => this.movimientos.set(data),
+      next: (data) => {
+        this.movimientos.set(data),
+          console.log("Datos de movimientos cargados", data)
+      },
       error: (err) => console.error('Error cargando movimientos', err)
     });
   }

@@ -14,6 +14,7 @@ export class Aprobar implements OnInit {
 
   estado: 'cargando' | 'exito' | 'error' = 'cargando';
   mensaje = '';
+  res: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -24,6 +25,9 @@ export class Aprobar implements OnInit {
   ngOnInit(): void {
     const token = this.route.snapshot.queryParamMap.get('token');
     const respuesta = this.route.snapshot.queryParamMap.get('respuesta');
+
+    this.res = respuesta;
+    console.log('Respuesta:', this.res);
 
     if (!token || !respuesta) {
       this.estado = 'error';

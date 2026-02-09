@@ -203,7 +203,7 @@ $text-muted: #666;
   .filter-bar {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px; // Espacio entre los selects
+    gap: 60px; // Espacio entre los selects
     padding: 16px;
     flex-wrap: wrap; // Para móviles
 
@@ -259,6 +259,11 @@ $text-muted: #666;
     &.pendiente {
       background: #fff3cd;
       color: #856404;
+    }
+
+    &.cancelado {
+      background: #f7e0e2;
+      color: #f7061e;
     }
   }
 }

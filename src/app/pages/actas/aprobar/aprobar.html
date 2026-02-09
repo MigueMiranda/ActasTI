@@ -8,12 +8,21 @@
     }
 
     @if (estado === 'exito') {
+    @if (res === 'rechazado') {
+    <div class="error">
+        <div class="icon">🚫</div>
+        <h2>Asignación Rechazada</h2>
+        <p class="msg-detalle">{{ mensaje }}</p>
+    </div>
+    } @else {
     <div class="exito">
         <div class="icon">✅</div>
         <h2>¡Operación Exitosa!</h2>
         <p class="msg-detalle">{{ mensaje }}</p>
     </div>
     }
+    }
+
 
     @if (estado === 'error') {
     <div class="error">

@@ -5,10 +5,12 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Fecha</th>
                 <th>Tienda</th>
                 <th>Serial</th>
                 <th>Responsable</th>
                 <th>Estado Asignación</th>
+                <th>Caso</th>
                 <th>Ubicación</th>
                 <th>Actas</th>
             </tr>
@@ -17,6 +19,7 @@
             @for (mov of movimientosPaginados(); track mov.id) {
             <tr>
                 <td>{{ mov.id }}</td>
+                <td>{{ mov.asignacion.created_at | date:'dd/MM/yyyy' }}</td>
                 <td>{{ mov.elemento.tienda?.nombre }}</td>
                 <td><strong>{{ mov.serial }}</strong></td>
                 <td>{{ mov.users.name }}</td>
@@ -25,6 +28,7 @@
                         {{ mov.estadoAsignacion | uppercase }}
                     </span>
                 </td>
+                <td>{{ mov.caso }}</td>
                 <td>{{ mov.ubicacionElemento }}</td>
                 <td>
                     @if (mov.acta && mov.acta !== 'N/A' && mov.acta !== 'pendiente') {
