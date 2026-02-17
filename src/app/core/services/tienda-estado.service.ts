@@ -21,14 +21,7 @@ export class TiendaEstadoService {
   }
 
   cargarInventario() {
-    this.inventarioService.getInventario().subscribe({
-      next: (data) => {
-        this.inventario.set(data);
-      },
-      error: (err) => {
-        console.error('Error al cargar el inventario:', err);
-      }
-    });
+    this.inventarioService.getInventario();
   }
 
   // 👇 Estados dinámicos

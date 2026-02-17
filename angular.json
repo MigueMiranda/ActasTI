@@ -61,6 +61,11 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": [
+              "uncooperatively-steelless-mary.ngrok-free.dev"
+            ]
+          },
           "configurations": {
             "production": {
               "buildTarget": "ActasTI:build:production"

@@ -53,6 +53,6 @@ export class ListarActa implements OnInit {
   verActa(path: string) {
     // Convierte la ruta absoluta del servidor a una URL accesible
     const fileName = path.split('/').pop();
-    window.open(`http://localhost:3000/public/actas/${fileName}`, '_blank');
+    window.open(`https://unsuccinct-van-biochemically.ngrok-free.dev/public/actas/${fileName}`, '_blank');
   }
 }

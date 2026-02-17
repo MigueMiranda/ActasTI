@@ -112,12 +112,13 @@ export class CrearActaComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe(data => {
+        console.log('🔍 Resultado búsqueda usuario:', data);
         if (data) {
           this.responsableForm.patchValue({
             nombre: data.name,
             cedula: String(data.id),
             cargo: data.cargo,
-            correo: data.correo
+            correo: data.email
           });
         }
       });
@@ -211,7 +212,7 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   confirmarGenerarActa() {
     const dialogRef = this.dialog.open(Dialog, {
       width: '400px',
-      data: { totalActivos: this.activosAgregados().length }
+      data: { mensaje: `Se generara acta con ${this.activosAgregados().length} activos` }
     });
 
     dialogRef.afterClosed().subscribe(res => {
@@ -247,7 +248,18 @@ export class CrearActaComponent implements OnInit, OnDestroy {
     this.activosForm.enable();
   }
 
+  cancelarActa() {
+    const dialogRef = this.dialog.open(Dialog, {
+      width: '400px',
+      data: { mensaje: '¿Estás seguro de cancelar la creación del acta? Se perderán los datos ingresados.' }
+    });
 
+    dialogRef.afterClosed().subscribe(res => {
+      if (res) {
+        this.resetFormulario();
+      }
+    });
+  }
 
   guardarBorrador() {
     const borrador = {

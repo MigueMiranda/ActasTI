@@ -13,8 +13,10 @@ export class InventarioService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.API_URL}/elementos`;
 
-  getInventario() {
-    return this.http.get<InventarioModel[]>(this.apiUrl)
+  getInventario(): Observable<InventarioModel[]> {
+    return this.http.get<InventarioModel[]>(this.apiUrl).pipe(
+      tap((data) => console.log('Inventario:', data))
+    );
   }
 
 

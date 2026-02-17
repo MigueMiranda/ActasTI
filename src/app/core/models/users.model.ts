@@ -2,6 +2,6 @@ export interface UserModel {
   id: number;
   name: string;
   cargo: string;
-  correo: string;
+  email: string;
   username: string;
 }

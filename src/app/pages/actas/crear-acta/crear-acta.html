@@ -28,6 +28,11 @@
               <mat-label>Cargo</mat-label>
               <input matInput formControlName="cargo" />
             </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Correo</mat-label>
+              <input matInput formControlName="correo" />
+            </mat-form-field>
           </div>
         </div>
 
@@ -167,7 +172,8 @@
         <button mat-stroked-button (click)="agregarElemento()">+ Añadir otro</button>
         <div class="spacer"></div>
         <button mat-button matStepperPrevious>Volver</button>
-        <button mat-raised-button color="accent" (click)="confirmarGenerarActa()">Confirmar Acta</button>
+        <button mat-raised-button color="accent" (click)="cancelarActa()">Cancelar Acta</button>
+        <button mat-raised-button color="primary" (click)="confirmarGenerarActa()">Confirmar Acta</button>
       </div>
     </mat-step>
 

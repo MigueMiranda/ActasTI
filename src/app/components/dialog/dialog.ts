@@ -2,7 +2,7 @@ import { Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
-import {MatIconModule} from '@angular/material/icon'
+import { MatIconModule } from '@angular/material/icon'
 
 @Component({
   standalone: true,
@@ -12,8 +12,7 @@ import {MatIconModule} from '@angular/material/icon'
 
     <mat-dialog-content>
       <p>
-        Se generará el acta con
-        <strong>{{ data.totalActivos }}</strong> activos asignados.
+        {{ data.mensaje }}
       </p>
       <p>¿Deseas continuar?</p>
     </mat-dialog-content>
@@ -33,8 +32,8 @@ export class Dialog {
 
   constructor(
     private dialogRef: MatDialogRef<Dialog>,
-    @Inject(MAT_DIALOG_DATA) public data: { totalActivos: number }
-  ) {}
+    @Inject(MAT_DIALOG_DATA) public data: { mensaje: string }
+  ) { }
 
   cancelar() {
     this.dialogRef.close(false);
