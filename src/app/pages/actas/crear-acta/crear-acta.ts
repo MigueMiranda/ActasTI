@@ -47,6 +47,7 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   tiendas = signal<any[]>([]);
   estados = this.tiendaEstadoService.estados;
   private destroy$ = new Subject<void>();
+  private readonly draftKey = 'acta_borrador';
 
   responsableForm = this.fb.group({
     usuario: ['', Validators.required],
@@ -87,7 +88,7 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   cargarInventario() {
     this.inventarioService.getInventario().subscribe({
       next: data => this.tiendaEstadoService.inventario.set(data),
-      error: err => console.error('❌ Error cargando inventario:', err)
+      error: err => console.error('Error cargando inventario:', err)
     });
   }
 
@@ -112,7 +113,6 @@ export class CrearActaComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe(data => {
-        console.log('🔍 Resultado búsqueda usuario:', data);
         if (data) {
           this.responsableForm.patchValue({
             nombre: data.name,
@@ -138,33 +138,20 @@ export class CrearActaComponent implements OnInit, OnDestroy {
         debounceTime(400),
         distinctUntilChanged(),
         switchMap((valor: string) => {
-          console.log(`🔍 Buscando ${campo}:`, valor);
           if (control.disabled) {
-            console.warn(`⚠️ Campo ${campo} está deshabilitado`);
             return of(null);
           }
           return this.inventarioService.buscarPorCampo(valor, campo).pipe(
-            catchError((err) => {
-              console.error(`❌ Error buscando ${campo} "${valor}":`, err);
-              console.error('Status:', err.status);
-              console.error('URL esperada:', `/elementos/${campo}/${valor}`);
-              return of(null);
-            })
+            catchError(() => of(null))
           );
         }),
         takeUntil(this.destroy$)
       )
-      .subscribe(
-        activo => {
-          if (activo) {
-            console.log(`✅ Resultado encontrado para ${campo}:`, activo);
-            this.autocompletarActivo(activo, campo);
-          } else {
-            console.warn(`⚠️ No se encontró resultado para ${campo}`);
-          }
-        },
-        err => console.error('Error en subscribe:', err)
-      );
+      .subscribe((activo) => {
+        if (activo) {
+          this.autocompletarActivo(activo, campo);
+        }
+      });
   }
 
 
@@ -227,21 +214,18 @@ export class CrearActaComponent implements OnInit, OnDestroy {
       ubicacion: this.ubicacionForm.value
     };
 
-    console.log('📤 Enviando acta con payload:', payload);
-
     this.actasService.notificarActa(payload).subscribe({
-      next: (res) => {
-        console.log('✅ Acta enviada:', res);
+      next: () => {
         this.resetFormulario();
       },
       error: (err) => {
-        console.error('❌ Error enviando acta:', err);
+        console.error('Error enviando acta:', err);
       }
     });
   }
 
   private resetFormulario() {
-    localStorage.removeItem('acta_borrador');
+    localStorage.removeItem(this.draftKey);
     this.stepper.reset();
     this.activosAgregados.set([]);
     this.responsableForm.enable();
@@ -267,19 +251,33 @@ export class CrearActaComponent implements OnInit, OnDestroy {
       activos: this.activosAgregados(),
       ubicacion: this.ubicacionForm.value
     };
-    localStorage.setItem('acta_borrador', JSON.stringify(borrador));
+    localStorage.setItem(this.draftKey, JSON.stringify(borrador));
   }
 
   recuperarBorrador() {
-    const data = localStorage.getItem('acta_borrador');
+    const data = localStorage.getItem(this.draftKey);
     if (!data) return;
 
-    const borrador = JSON.parse(data);
-    this.responsableForm.patchValue(borrador.responsable);
-    this.ubicacionForm.patchValue(borrador.ubicacion);
-    this.activosAgregados.set(borrador.activos || []);
+    try {
+      const borrador = JSON.parse(data) as {
+        responsable?: Record<string, unknown>;
+        activos?: unknown[];
+        ubicacion?: Record<string, unknown>;
+      };
 
-    if (this.activosAgregados().length > 0) this.responsableForm.disable();
+      if (!borrador || typeof borrador !== 'object') {
+        localStorage.removeItem(this.draftKey);
+        return;
+      }
+
+      this.responsableForm.patchValue(borrador.responsable ?? {});
+      this.ubicacionForm.patchValue(borrador.ubicacion ?? {});
+      this.activosAgregados.set(Array.isArray(borrador.activos) ? borrador.activos : []);
+
+      if (this.activosAgregados().length > 0) this.responsableForm.disable();
+    } catch {
+      localStorage.removeItem(this.draftKey);
+    }
   }
 
   ngOnDestroy(): void {

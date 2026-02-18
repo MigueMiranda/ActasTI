@@ -4,10 +4,10 @@
     <table class="tabla">
         <thead>
             <tr>
+                <th></th>
                 <th>ID</th>
                 <th>Fecha</th>
                 <th>Tienda</th>
-                <th>Serial</th>
                 <th>Responsable</th>
                 <th>Estado Asignación</th>
                 <th>Caso</th>
@@ -15,34 +15,80 @@
                 <th>Actas</th>
             </tr>
         </thead>
+
         <tbody>
             @for (mov of movimientosPaginados(); track mov.id) {
+
+            <!-- FILA PRINCIPAL -->
             <tr>
+                <!-- BOTÓN EXPANDIR -->
+                <td>
+                    <button (click)="toggle(mov.id)">
+                        {{ expandedId === mov.id ? '▲' : '▼' }}
+                    </button>
+                </td>
                 <td>{{ mov.id }}</td>
                 <td>{{ mov.asignacion.created_at | date:'dd/MM/yyyy' }}</td>
                 <td>{{ mov.elemento.tienda?.nombre }}</td>
-                <td><strong>{{ mov.serial }}</strong></td>
                 <td>{{ mov.users.name }}</td>
+
                 <td>
                     <span [class]="'badge ' + mov.estadoAsignacion">
                         {{ mov.estadoAsignacion | uppercase }}
                     </span>
                 </td>
+
                 <td>{{ mov.caso }}</td>
                 <td>{{ mov.ubicacionElemento }}</td>
+
                 <td>
                     @if (mov.acta && mov.acta !== 'N/A' && mov.acta !== 'pendiente') {
-                    <button class="btn-pdf" (click)='verActa(mov.acta)'>
+                    <button class="btn-pdf" (click)="verActa(mov.acta)">
                         <span class="material-icons">picture_as_pdf</span>
                     </button>
                     } @else {
                     <span class="no-acta">Sin acta</span>
                     }
                 </td>
+
+
             </tr>
+
+            <!-- FILA EXPANDIDA -->
+            @if (expandedId === mov.id) {
+            <tr class="detalle-row">
+                <td colspan="9">
+
+                    <table class="subtabla">
+                        <thead>
+                            <tr>
+                                <th>Serial</th>
+                                <th>Tipo</th>
+                                <th>Fabricante</th>
+                                <th>Modelo</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @for (el of mov; track el.id) {
+                            <tr>
+                                <td><strong>{{ el.serial }}</strong></td>
+                                <td>{{ el.tipo }}</td>
+                                <td>{{ el.fabricante }}</td>
+                                <td>{{ el.modelo }}</td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                </td>
+            </tr>
+            }
+
             }
         </tbody>
     </table>
+
 
     <div class="paginacion">
         <span class="page-info">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>

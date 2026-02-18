@@ -1,3 +1,10 @@
+const isLocalHost = ['localhost', '127.0.0.1'].includes(
+  globalThis.location?.hostname ?? ''
+);
+
 export const environment = {
-    API_URL: 'https://unsuccinct-van-biochemically.ngrok-free.dev/api/v1',
+  production: false,
+  API_URL: isLocalHost
+    ? 'http://localhost:3000/api/v1'
+    : 'https://unsuccinct-van-biochemically.ngrok-free.dev/api/v1',
 };

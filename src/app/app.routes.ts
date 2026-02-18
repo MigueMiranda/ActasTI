@@ -8,13 +8,15 @@ import { InventarioComponent } from './pages/activos/inventario/inventario';
 import { ConfirmarToken } from './pages/aprobaciones/confirmar-token/confirmar-token';
 import { Layout } from './components/layout/layout';
 import { Aprobar } from './pages/actas/aprobar/aprobar';
+import { AuthGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
 
-    { path: '', component: Login },
+    { path: '', component: Login, pathMatch: 'full' },
     {
         path: '',
         component: Layout,
+        canActivateChild: [AuthGuard],
         children: [
             { path: 'inicio', component: Inicio },
             { path: 'crear-acta', component: CrearActaComponent },
@@ -24,7 +26,8 @@ export const routes: Routes = [
             { path: 'confirmar-token', component: ConfirmarToken }
         ]
     },
-    { path: 'aprobar', component: Aprobar }
+    { path: 'aprobar', component: Aprobar },
+    { path: '**', redirectTo: '' }
 
 
 ];

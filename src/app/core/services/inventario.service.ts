@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from './../../../environments/environment';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { InventarioModel } from '../models/inventario.model';
 
@@ -14,14 +14,13 @@ export class InventarioService {
   private apiUrl = `${environment.API_URL}/elementos`;
 
   getInventario(): Observable<InventarioModel[]> {
-    return this.http.get<InventarioModel[]>(this.apiUrl).pipe(
-      tap((data) => console.log('Inventario:', data))
-    );
+    return this.http.get<InventarioModel[]>(this.apiUrl);
   }
 
 
 
   buscarPorCampo(valor: string, campo: 'serial' | 'placa'): Observable<InventarioModel> {
-    return this.http.get<InventarioModel>(`${this.apiUrl}/${campo}/${valor}`);
+    const safeValue = encodeURIComponent(valor.trim());
+    return this.http.get<InventarioModel>(`${this.apiUrl}/${campo}/${safeValue}`);
   }
 }

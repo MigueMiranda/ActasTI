@@ -1,6 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 
 import { ActasService } from './../../../core/services/actas.service';
 
@@ -11,6 +10,7 @@ import { ActasService } from './../../../core/services/actas.service';
   styleUrl: './aprobar.scss',
 })
 export class Aprobar implements OnInit {
+  private readonly respuestasPermitidas = new Set(['aprobado', 'rechazado']);
 
   estado: 'cargando' | 'exito' | 'error' = 'cargando';
   mensaje = '';
@@ -24,12 +24,16 @@ export class Aprobar implements OnInit {
 
   ngOnInit(): void {
     const token = this.route.snapshot.queryParamMap.get('token');
-    const respuesta = this.route.snapshot.queryParamMap.get('respuesta');
+    const respuesta = this.route.snapshot.queryParamMap.get('respuesta')?.toLowerCase() ?? null;
 
     this.res = respuesta;
-    console.log('Respuesta:', this.res);
 
-    if (!token || !respuesta) {
+    if (
+      !token ||
+      !respuesta ||
+      token.length > 2048 ||
+      !this.respuestasPermitidas.has(respuesta)
+    ) {
       this.estado = 'error';
       this.mensaje = 'Enlace inválido o incompleto';
       return;
@@ -38,7 +42,7 @@ export class Aprobar implements OnInit {
     this.actasService.confirmarAsignacion(token, respuesta, true).subscribe({
       next: (res: any) => {
         this.estado = 'exito';
-        this.mensaje = res?.message || res?.error.message || 'Asignación procesada';
+        this.mensaje = res?.message || res?.error?.message || 'Asignación procesada';
         this.cdr.detectChanges();
       },
       error: (err) => {

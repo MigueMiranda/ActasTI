@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { ActasService } from './../../../core/services/actas.service';
 import { CommonModule } from '@angular/common';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-listar-acta',
@@ -11,6 +12,8 @@ import { CommonModule } from '@angular/common';
   styleUrl: './listar-acta.scss',
 })
 export class ListarActa implements OnInit {
+  private readonly actasBaseUrl = this.getActasBaseUrl();
+
   movimientos = signal<any[]>([]);
   paginaActual = signal(1);
   itemsPorPagina = 10;
@@ -34,11 +37,16 @@ export class ListarActa implements OnInit {
     this.cargarMovimientos();
   }
 
+  expandedId: number | null = null;
+
+  toggle(id: number) {
+    this.expandedId = this.expandedId === id ? null : id;
+  }
+
   cargarMovimientos() {
     this.actasService.getMovimientos().subscribe({
       next: (data) => {
-        this.movimientos.set(data),
-          console.log("Datos de movimientos cargados", data)
+        this.movimientos.set(data);
       },
       error: (err) => console.error('Error cargando movimientos', err)
     });
@@ -51,8 +59,28 @@ export class ListarActa implements OnInit {
   }
 
   verActa(path: string) {
-    // Convierte la ruta absoluta del servidor a una URL accesible
-    const fileName = path.split('/').pop();
-    window.open(`https://unsuccinct-van-biochemically.ngrok-free.dev/public/actas/${fileName}`, '_blank');
+    const fileName = this.getSafeFileName(path);
+    if (!fileName) {
+      return;
+    }
+
+    const actaUrl = `${this.actasBaseUrl}/public/actas/${encodeURIComponent(fileName)}`;
+    window.open(actaUrl, '_blank', 'noopener,noreferrer');
+  }
+
+  private getActasBaseUrl(): string {
+    try {
+      return new URL(environment.API_URL).origin;
+    } catch {
+      return globalThis.location?.origin ?? '';
+    }
+  }
+
+  private getSafeFileName(path: string): string | null {
+    const candidate = path.split(/[\\/]/).pop()?.trim() ?? '';
+    if (!candidate || !/^[A-Za-z0-9._-]+$/.test(candidate)) {
+      return null;
+    }
+    return candidate;
   }
 }

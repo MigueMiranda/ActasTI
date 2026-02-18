@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from './../../../environments/environment';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { UserModel } from './../models/users.model';
 
@@ -18,7 +18,8 @@ export class UserService {
   }
 
   getByUsername(username: string): Observable<UserModel> {
-    return this.http.get<UserModel>(`${this.apiUrl}/${username}`);
+    const safeUsername = encodeURIComponent(username.trim());
+    return this.http.get<UserModel>(`${this.apiUrl}/${safeUsername}`);
   }
 
 }

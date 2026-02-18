@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLinkWithHref, RouterLinkActive } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterOutlet, RouterLinkWithHref, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 
 @Component({
@@ -13,6 +14,8 @@ import { RouterOutlet, RouterLinkWithHref, RouterLinkActive } from '@angular/rou
   styleUrl: './layout.scss',
 })
 export class Layout {
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   sidebarCollapsed = true;
   darkMode = false;
@@ -23,6 +26,11 @@ export class Layout {
 
   toggleDark() {
     this.darkMode = !this.darkMode;
+  }
+
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/']);
   }
 
 }

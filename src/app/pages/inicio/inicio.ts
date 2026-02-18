@@ -153,8 +153,6 @@ export class Inicio implements OnInit {
   // ✅ CORREGIDO: Ahora recibe array
   onTipoChange(tipos: string[]) {
     this.tiposSeleccionados.set(tipos);
-    console.log('Tipos seleccionados:', tipos); // Debug
-    console.log('Tipos en signal:', this.tiposSeleccionados()); // Debug
     this.cargarDatos();
   }
 
@@ -165,12 +163,8 @@ export class Inicio implements OnInit {
       tipos: this.tiposSeleccionados() // ✅ CAMBIADO: Enviar como 'tipos' (plural)
     };
 
-    console.log('Filtros enviados:', filtros);
-
     this.dashboardService.getStats(filtros).subscribe({
       next: data => {
-        console.log('Data recibida:', data);
-
         this.totalActas.set(data.kpis.totalActas);
         this.totalActivos.set(data.kpis.totalActivos);
         this.disponibles.set(data.kpis.disponibles);
