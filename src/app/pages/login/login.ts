@@ -20,7 +20,7 @@ export class Login implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
-  
+
   // Creo las variables para el login
   usuario: string = '';
   password: string = '';
@@ -36,22 +36,40 @@ export class Login implements OnInit {
   login() {
     const usuario = this.usuario.trim();
 
-    if (usuario && this.password) {
-      const authenticated = this.authService.login(usuario, this.password);
-      if (!authenticated) {
-        this.mensaje_error = 'No fue posible iniciar sesión. Intenta de nuevo.';
-        return;
-      }
-
-      const redirect = this.route.snapshot.queryParamMap.get('redirect');
-      this.password = '';
-      this.mensaje_error = '';
-      this.router.navigateByUrl(this.isSafeRedirect(redirect) ? redirect : '/inicio');
-    }
-    else {
+    if (!usuario || !this.password) {
       this.mensaje_error = 'Usuario o contraseña incorrectos';
+      return;
     }
+
+    this.authService.login(usuario, this.password)
+      .subscribe({
+        next: (data) => {
+
+          console.log(data)
+
+          const now = Date.now();
+          const session = {
+            username: usuario,
+            token: data.token,
+            issuedAt: now,
+            expiresAt: now + 8 * 60 * 60 * 1000
+          };
+
+          sessionStorage.setItem('actasti_auth_session', JSON.stringify(session));
+
+          const redirect = this.route.snapshot.queryParamMap.get('redirect');
+
+          this.router.navigateByUrl(
+            this.isSafeRedirect(redirect) ? redirect : '/inicio'
+          );
+
+        },
+        error: () => {
+          this.mensaje_error = 'No fue posible iniciar sesión';
+        }
+      });
   }
+
 
   private isSafeRedirect(redirect: string | null): redirect is string {
     return !!redirect && redirect.startsWith('/') && !redirect.startsWith('//');

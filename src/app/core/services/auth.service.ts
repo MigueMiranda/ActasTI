@@ -1,8 +1,14 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+import { environment } from '../../../environments/environment';
+import { tap } from 'rxjs';
 
 interface AuthSession {
   username: string;
   token: string;
+  name: string,
+  cargo: string,
   issuedAt: number;
   expiresAt: number;
 }
@@ -11,30 +17,30 @@ interface AuthSession {
   providedIn: 'root',
 })
 export class AuthService {
+  private http = inject(HttpClient);
+  private apiUrl = `${environment.API_URL}/auth`;
+
   private readonly sessionKey = 'actasti_auth_session';
   private readonly sessionDurationMs = 8 * 60 * 60 * 1000;
+  private user = {};
 
-  login(username: string, password: string): boolean {
-    const cleanUsername = username.trim();
-    if (!cleanUsername || !password) {
-      return false;
-    }
+  login(username: string, password: string) {
+    return this.http.post<any>(`${this.apiUrl}/login`, { username, password })
+      .pipe(
+        tap(res => {
+          const session = {
+            username,
+            token: res.token,
+            issuedAt: Date.now(),
+            expiresAt: Date.now() + this.sessionDurationMs
+          };
 
-    const now = Date.now();
-    const session: AuthSession = {
-      username: cleanUsername,
-      token: this.generateToken(),
-      issuedAt: now,
-      expiresAt: now + this.sessionDurationMs,
-    };
-
-    try {
-      sessionStorage.setItem(this.sessionKey, JSON.stringify(session));
-      return true;
-    } catch {
-      return false;
-    }
+          sessionStorage.setItem(this.sessionKey, JSON.stringify(session));
+        })
+      );
   }
+
+
 
   logout(): void {
     sessionStorage.removeItem(this.sessionKey);
