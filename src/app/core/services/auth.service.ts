@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
 import { environment } from '../../../environments/environment';
-import { tap } from 'rxjs';
+import { map, tap } from 'rxjs';
 
 interface AuthSession {
   username: string;
@@ -11,6 +11,25 @@ interface AuthSession {
   cargo: string,
   issuedAt: number;
   expiresAt: number;
+}
+
+interface AuthUserPayload {
+  username?: string;
+  name?: string;
+  cargo?: string;
+}
+
+interface AuthLoginResponse {
+  token?: string;
+  accessToken?: string;
+  jwt?: string;
+  user?: AuthUserPayload;
+  data?: {
+    token?: string;
+    accessToken?: string;
+    jwt?: string;
+    user?: AuthUserPayload;
+  };
 }
 
 @Injectable({
@@ -22,21 +41,14 @@ export class AuthService {
 
   private readonly sessionKey = 'actasti_auth_session';
   private readonly sessionDurationMs = 8 * 60 * 60 * 1000;
-  private user = {};
 
   login(username: string, password: string) {
-    return this.http.post<any>(`${this.apiUrl}/login`, { username, password })
+    return this.http.post<AuthLoginResponse>(`${this.apiUrl}/login`, { username, password })
       .pipe(
-        tap(res => {
-          const session = {
-            username,
-            token: res.token,
-            issuedAt: Date.now(),
-            expiresAt: Date.now() + this.sessionDurationMs
-          };
-
+        map((response) => this.buildSession(response, username)),
+        tap((session) => {
           sessionStorage.setItem(this.sessionKey, JSON.stringify(session));
-        })
+        }),
       );
   }
 
@@ -81,6 +93,7 @@ export class AuthService {
       if (
         typeof parsed.username !== 'string' ||
         typeof parsed.name !== 'string' ||
+        typeof parsed.cargo !== 'string' ||
         typeof parsed.token !== 'string' ||
         typeof parsed.issuedAt !== 'number' ||
         typeof parsed.expiresAt !== 'number' ||
@@ -97,15 +110,58 @@ export class AuthService {
     }
   }
 
-  private generateToken(): string {
-    const bytes = new Uint8Array(16);
-    const cryptoApi = globalThis.crypto;
-
-    if (cryptoApi?.getRandomValues) {
-      cryptoApi.getRandomValues(bytes);
-      return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  private buildSession(response: AuthLoginResponse, fallbackUsername: string): AuthSession {
+    const token = this.extractToken(response);
+    if (!token) {
+      throw new Error('Token no presente en respuesta de login');
     }
 
-    return `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}`;
+    const user = this.extractUser(response);
+    const username = this.readString(user?.username, fallbackUsername) ?? fallbackUsername;
+    const name = this.readString(user?.name, username) ?? username;
+    const cargo = this.readString(user?.cargo, '') ?? '';
+    const now = Date.now();
+
+    return {
+      username,
+      token,
+      name,
+      cargo,
+      issuedAt: now,
+      expiresAt: now + this.sessionDurationMs,
+    };
+  }
+
+  private extractToken(response: AuthLoginResponse): string | null {
+    return this.readString(
+      response.token,
+      response.accessToken,
+      response.jwt,
+      response.data?.token,
+      response.data?.accessToken,
+      response.data?.jwt
+    );
+  }
+
+  private extractUser(response: AuthLoginResponse): AuthUserPayload | null {
+    if (response.user && typeof response.user === 'object') {
+      return response.user;
+    }
+    if (response.data?.user && typeof response.data.user === 'object') {
+      return response.data.user;
+    }
+    return null;
+  }
+
+  private readString(...values: Array<unknown>): string | null {
+    for (const value of values) {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed.length > 0) {
+          return trimmed;
+        }
+      }
+    }
+    return null;
   }
 }

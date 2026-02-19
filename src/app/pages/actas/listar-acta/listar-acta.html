@@ -35,7 +35,7 @@
 
                 <td>
                     @if (mov.acta && mov.acta !== 'N/A' && mov.acta !== 'pendiente') {
-                    <button class="btn-pdf" (click)="verActa(mov.acta)">
+                    <button class="btn-pdf" (click)="verActa(mov.acta, $event)">
                         <span class="material-icons">picture_as_pdf</span>
                     </button>
                     } @else {

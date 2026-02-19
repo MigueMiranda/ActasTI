@@ -43,21 +43,7 @@ export class Login implements OnInit {
 
     this.authService.login(usuario, this.password)
       .subscribe({
-        next: (data) => {
-
-          console.log(data)
-
-          const now = Date.now();
-          const session = {
-            username: usuario,
-            name: data.user.name,
-            token: data.token,
-            issuedAt: now,
-            expiresAt: now + 8 * 60 * 60 * 1000
-          };
-
-          sessionStorage.setItem('actasti_auth_session', JSON.stringify(session));
-
+        next: () => {
           const redirect = this.route.snapshot.queryParamMap.get('redirect');
 
           this.router.navigateByUrl(
@@ -65,8 +51,10 @@ export class Login implements OnInit {
           );
 
         },
-        error: () => {
-          this.mensaje_error = 'No fue posible iniciar sesión';
+        error: (err) => {
+          this.mensaje_error = err?.status === 401
+            ? 'Usuario o contraseña incorrectos'
+            : 'No fue posible iniciar sesión';
         }
       });
   }

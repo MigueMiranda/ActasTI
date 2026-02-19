@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, signal, inject } from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { switchMap, catchError, debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
+import { switchMap, catchError, debounceTime, distinctUntilChanged, filter, map, takeUntil, tap } from 'rxjs/operators';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -103,11 +103,24 @@ export class CrearActaComponent implements OnInit, OnDestroy {
     // Busqueda Responsable
     this.responsableForm.get('usuario')?.valueChanges
       .pipe(
+        filter((value): value is string => typeof value === 'string'),
+        map((value) => value.trim()),
         debounceTime(500),
         distinctUntilChanged(),
-        switchMap(usuario =>
-          this.userService.getByUsername(usuario!).pipe(
-            catchError(() => of(null)) // Manejo de error, retorna null si falla
+        tap((usuario) => {
+          if (usuario.length < 3) {
+            this.limpiarDatosResponsable();
+          }
+        }),
+        filter((usuario) => usuario.length >= 3),
+        switchMap((usuario) =>
+          this.userService.getByUsername(usuario).pipe(
+            catchError((err) => {
+              if (err?.status && err.status !== 404) {
+                console.warn(`No se pudo consultar usuario (${err.status}).`);
+              }
+              return of(null);
+            })
           )
         ),
         takeUntil(this.destroy$)
@@ -120,6 +133,8 @@ export class CrearActaComponent implements OnInit, OnDestroy {
             cargo: data.cargo,
             correo: data.email
           });
+        } else {
+          this.limpiarDatosResponsable();
         }
       });
 
@@ -222,6 +237,15 @@ export class CrearActaComponent implements OnInit, OnDestroy {
         console.error('Error enviando acta:', err);
       }
     });
+  }
+
+  private limpiarDatosResponsable() {
+    this.responsableForm.patchValue({
+      cedula: '',
+      nombre: '',
+      cargo: '',
+      correo: ''
+    }, { emitEvent: false });
   }
 
   private resetFormulario() {

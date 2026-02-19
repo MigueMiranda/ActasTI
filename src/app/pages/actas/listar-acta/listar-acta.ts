@@ -1,7 +1,6 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { ActasService } from './../../../core/services/actas.service';
 import { CommonModule } from '@angular/common';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-listar-acta',
@@ -12,8 +11,6 @@ import { environment } from '../../../../environments/environment';
   styleUrl: './listar-acta.scss',
 })
 export class ListarActa implements OnInit {
-  private readonly actasBaseUrl = this.getActasBaseUrl();
-
   movimientos = signal<any[]>([]);
   paginaActual = signal(1);
   itemsPorPagina = 10;
@@ -67,22 +64,61 @@ export class ListarActa implements OnInit {
     }
   }
 
-  verActa(path: string) {
+  verActa(path: string, event?: MouseEvent) {
+    event?.stopPropagation();
+
     const fileName = this.getSafeFileName(path);
     if (!fileName) {
       return;
     }
 
-    const actaUrl = `${this.actasBaseUrl}/public/actas/${encodeURIComponent(fileName)}`;
-    window.open(actaUrl, '_blank', 'noopener,noreferrer');
-  }
-
-  private getActasBaseUrl(): string {
-    try {
-      return new URL(environment.API_URL).origin;
-    } catch {
-      return globalThis.location?.origin ?? '';
+    const popup = window.open('', '_blank');
+    if (popup) {
+      popup.document.title = 'Cargando acta...';
+      popup.document.body.textContent = 'Cargando acta...';
+      try {
+        popup.opener = null;
+      } catch {
+        // No-op: algunos navegadores no permiten sobrescribir opener.
+      }
     }
+
+    this.actasService.getActaPdf(fileName).subscribe({
+      next: (blob) => {
+        if (blob.size === 0) {
+          if (popup) {
+            popup.document.body.textContent = 'El archivo acta está vacío.';
+          }
+          return;
+        }
+
+        const blobType = blob.type.toLowerCase();
+        const looksLikeTextError = blobType.includes('text') || blobType.includes('json');
+        if (looksLikeTextError) {
+          blob.text().then((text) => {
+            if (popup) {
+              popup.document.body.textContent = text || 'Respuesta inesperada del servidor al abrir el acta.';
+            }
+          });
+          return;
+        }
+
+        const blobUrl = URL.createObjectURL(blob);
+        if (popup) {
+          popup.location.href = blobUrl;
+        } else {
+          window.open(blobUrl, '_blank');
+        }
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+      },
+      error: (err) => {
+        console.error('No se pudo abrir el acta', err);
+        if (popup) {
+          const status = typeof err?.status === 'number' ? err.status : 'sin código';
+          popup.document.body.textContent = `No se pudo abrir el acta (status: ${status}). Verifica tu sesión o la ruta del archivo.`;
+        }
+      }
+    });
   }
 
   private getSafeFileName(path: string): string | null {
