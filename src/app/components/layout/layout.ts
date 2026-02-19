@@ -9,7 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
     RouterOutlet,
     RouterLinkActive,
     RouterLinkWithHref
-],
+  ],
   templateUrl: './layout.html',
   styleUrl: './layout.scss',
 })
@@ -17,15 +17,19 @@ export class Layout {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  userName: string = '';
+
   sidebarCollapsed = true;
   darkMode = false;
 
-  toggleSidebar() {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
+  ngOnInit() {
+    const user = this.authService.getUsername();
+    this.userName = user?.trim().split(' ')[0] || '';
+    console.log("Usuario: ", this.userName);
   }
 
-  toggleDark() {
-    this.darkMode = !this.darkMode;
+  toggleSidebar() {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
   }
 
   logout() {

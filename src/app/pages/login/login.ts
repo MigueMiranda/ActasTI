@@ -50,6 +50,7 @@ export class Login implements OnInit {
           const now = Date.now();
           const session = {
             username: usuario,
+            name: data.user.name,
             token: data.token,
             issuedAt: now,
             expiresAt: now + 8 * 60 * 60 * 1000

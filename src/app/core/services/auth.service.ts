@@ -61,7 +61,8 @@ export class AuthService {
   }
 
   getUsername(): string | null {
-    return this.getSession()?.username ?? null;
+    const user = this.getSession()?.name ?? null;
+    return user;
   }
 
   private getSession(): AuthSession | null {
@@ -79,6 +80,7 @@ export class AuthService {
 
       if (
         typeof parsed.username !== 'string' ||
+        typeof parsed.name !== 'string' ||
         typeof parsed.token !== 'string' ||
         typeof parsed.issuedAt !== 'number' ||
         typeof parsed.expiresAt !== 'number' ||
