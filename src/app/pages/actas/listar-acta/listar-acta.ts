@@ -29,6 +29,7 @@ export class ListarActa implements OnInit {
     return ordenados.slice(inicio, fin);
   });
 
+
   totalPaginas = computed(() => Math.ceil(this.movimientos().length / this.itemsPorPagina));
 
   constructor(private actasService: ActasService) { }
@@ -45,12 +46,20 @@ export class ListarActa implements OnInit {
 
   cargarMovimientos() {
     this.actasService.getMovimientos().subscribe({
-      next: (data) => {
-        this.movimientos.set(data);
-      },
-      error: (err) => console.error('Error cargando movimientos', err)
+      next: (data: any[]) => {
+
+        console.log('Movimientos: ', data)
+
+        const formateado = data.map(grupo => ({
+          ...grupo[0],
+          elemento: grupo
+        }));
+
+        this.movimientos.set(formateado);
+      }
     });
   }
+
 
   cambiarPagina(p: number) {
     if (p >= 1 && p <= this.totalPaginas()) {

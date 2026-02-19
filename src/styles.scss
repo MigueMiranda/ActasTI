@@ -230,42 +230,61 @@ $text-muted: #666;
 
 .tabla {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   margin-top: 20px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 
-  th,
+  thead {
+    background: linear-gradient(90deg, #0066b3, #0088cc);
+    color: white;
+
+    th {
+      padding: 14px;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: none;
+    }
+  }
+
+  tbody tr {
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: scale(1.002);
+    }
+  }
+
   td {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
+    padding: 14px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
   }
+}
 
-  .badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: bold;
+.fila-movimiento {
+  cursor: pointer;
 
-    &.aprobado {
-      background: #d4edda;
-      color: #155724;
-    }
-
-    &.rechazado {
-      background: #f8d7da;
-      color: #721c24;
-    }
-
-    &.pendiente {
-      background: #fff3cd;
-      color: #856404;
-    }
-
-    &.cancelado {
-      background: #f7e0e2;
-      color: #f7061e;
-    }
+  &:hover {
+    background: #f1f5f9;
   }
+}
+
+.subtabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  background: #f8fafc;
+}
+
+.detalle-row td {
+  padding: 15px !important;
+  border-radius: 12px;
 }
 
 // Badges de Estado
@@ -304,6 +323,26 @@ $text-muted: #666;
   &.enprestamo {
     background: #e0f2fe;
     color: #0c4666;
+  }
+
+  &.aprobado {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &.pendiente {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  &.rechazado {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  &.cancelado {
+    background: #e5e7eb;
+    color: #374151;
   }
 }
 

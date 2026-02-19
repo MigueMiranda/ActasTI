@@ -4,7 +4,6 @@
     <table class="tabla">
         <thead>
             <tr>
-                <th></th>
                 <th>ID</th>
                 <th>Fecha</th>
                 <th>Tienda</th>
@@ -20,21 +19,14 @@
             @for (mov of movimientosPaginados(); track mov.id) {
 
             <!-- FILA PRINCIPAL -->
-            <tr>
-                <!-- BOTÓN EXPANDIR -->
-                <td>
-                    <button (click)="toggle(mov.id)">
-                        {{ expandedId === mov.id ? '▲' : '▼' }}
-                    </button>
-                </td>
+            <tr class="fila-movimiento" (click)="toggle(mov.id)">
                 <td>{{ mov.id }}</td>
                 <td>{{ mov.asignacion.created_at | date:'dd/MM/yyyy' }}</td>
-                <td>{{ mov.elemento.tienda?.nombre }}</td>
+                <td>{{ mov.tienda?.nombre }}</td>
                 <td>{{ mov.users.name }}</td>
-
                 <td>
-                    <span [class]="'badge ' + mov.estadoAsignacion">
-                        {{ mov.estadoAsignacion | uppercase }}
+                    <span class="status" [ngClass]="mov.estadoAsignacion?.toLowerCase()">
+                        {{ mov.estadoAsignacion }}
                     </span>
                 </td>
 
@@ -66,16 +58,18 @@
                                 <th>Tipo</th>
                                 <th>Fabricante</th>
                                 <th>Modelo</th>
+                                <th>Estado</th>
                             </tr>
                         </thead>
 
                         <tbody>
-                            @for (el of mov; track el.id) {
+                            @for (el of mov.elemento; track $index) {
                             <tr>
-                                <td><strong>{{ el.serial }}</strong></td>
-                                <td>{{ el.tipo }}</td>
-                                <td>{{ el.fabricante }}</td>
-                                <td>{{ el.modelo }}</td>
+                                <td>{{ el.serial }}</td>
+                                <td>{{ el.elemento?.tipo }}</td>
+                                <td>{{ el.elemento?.fabricante }}</td>
+                                <td>{{ el.elemento?.modelo }}</td>
+                                <td>{{ el.estadoElemento }}</td>
                             </tr>
                             }
                         </tbody>
