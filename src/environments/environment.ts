@@ -6,5 +6,5 @@ export const environment = {
   production: false,
   API_URL: isLocalHost
     ? 'http://localhost:3000/api/v1'
-    : 'https://unsuccinct-van-biochemically.ngrok-free.dev/api/v1',
+    : 'https://bk-actas-sodimac.onrender.com/api/v1',
 };
