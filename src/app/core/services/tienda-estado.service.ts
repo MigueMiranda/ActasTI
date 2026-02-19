@@ -1,8 +1,9 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from './../../../environments/environment';
+import { catchError, of } from 'rxjs';
 
-import { TiendaModel, EstadoModel } from '../models/tienda-estado.model';
+import { TiendaModel } from '../models/tienda-estado.model';
 import { InventarioModel } from '../models/inventario.model';
 import { InventarioService } from './inventario.service';
 
@@ -21,7 +22,20 @@ export class TiendaEstadoService {
   }
 
   cargarInventario() {
-    this.inventarioService.getInventario();
+    this.inventarioService.getInventario()
+      .pipe(
+        catchError((err) => {
+          console.error('Error cargando inventario para filtros', err);
+          return of([] as InventarioModel[]);
+        })
+      )
+      .subscribe((data) => {
+        this.inventario.set(Array.isArray(data) ? data : []);
+      });
+  }
+
+  private hasText(value?: string | null): value is string {
+    return typeof value === 'string' && value.trim().length > 0;
   }
 
   // 👇 Estados dinámicos
@@ -29,7 +43,8 @@ export class TiendaEstadoService {
     return [...new Set(
       this.inventario()
         .map(i => i.estado)
-        .filter(Boolean)
+        .filter(this.hasText)
+        .map(estado => estado.trim())
     )].sort();
   });
 
@@ -38,7 +53,8 @@ export class TiendaEstadoService {
     return [...new Set(
       this.inventario()
         .map(i => i.tipo)
-        .filter(Boolean)
+        .filter(this.hasText)
+        .map(tipo => tipo.trim())
     )].sort();
   });
 
