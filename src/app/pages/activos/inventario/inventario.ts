@@ -94,6 +94,52 @@ export class InventarioComponent implements OnInit {
     }
   }
 
+  cleanFilter() {
+    this.filterTienda.set('');
+    this.filterTipo.set('');
+    this.filterEstado.set('');
+    this.filterSerial.set('');
+    this.filterPlaca.set('');
+    this.filterFabricante.set('');
+    this.filterModelo.set('');
+    this.filterResponsable.set('');
+    this.currentPage.set(1);
+  }
+
+  downloadFilteredCsv() {
+    const rows = this.inventarioFiltrado();
+    if (!rows.length) {
+      return;
+    }
+
+    const headers = ['Tienda', 'Serial', 'Placa', 'Tipo', 'Fabricante', 'Modelo', 'Responsable', 'Ubicacion', 'Estado'];
+    const csvRows = rows.map((item) => [
+      item.tienda?.nombre ?? '',
+      item.serial ?? '',
+      item.placa ?? '',
+      item.tipo ?? '',
+      item.fabricante ?? '',
+      item.modelo ?? '',
+      item.usuario?.name ?? '',
+      item.ubicacion ?? '',
+      item.estado ?? '',
+    ]);
+
+    const csvContent = [headers, ...csvRows]
+      .map((row) => row.map((value) => this.escapeCsvValue(value)).join(','))
+      .join('\n');
+
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `inventario_filtrado_${this.getTimestamp()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   updateFilter(type: 'tienda' | 'tipo' | 'estado' | 'serial' | 'placa' | 'fabricante' | 'modelo' | 'responsable', value: string) {
     if (type === 'tienda') this.filterTienda.set(value);
     if (type === 'tipo') this.filterTipo.set(value);
@@ -104,5 +150,19 @@ export class InventarioComponent implements OnInit {
     if (type === 'modelo') this.filterModelo.set(value);
     if (type === 'responsable') this.filterResponsable.set(value);
     this.currentPage.set(1); // Reset a pág 1 al filtrar
+  }
+
+  private escapeCsvValue(value: unknown): string {
+    const text = String(value ?? '');
+    if (/[",\n]/.test(text)) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+  }
+
+  private getTimestamp(): string {
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   }
 }

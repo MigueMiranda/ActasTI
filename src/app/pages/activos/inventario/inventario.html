@@ -3,7 +3,7 @@
     <div class="header-filters">
       <div class="filter-group">
         <span class="material-icons">store</span>
-        <select (change)="updateFilter('tienda', $any($event.target).value)">
+        <select [value]="filterTienda()" (change)="updateFilter('tienda', $any($event.target).value)">
           <option value="">Todas las tiendas</option>
           @for (tienda of tiendas(); track tienda) {
           <option value="{{ tienda }}">{{ tienda }}</option>
@@ -13,43 +13,46 @@
 
       <div class="filter-group">
         <span class="material-icons">category</span>
-        <input type="text" placeholder="Serial..." (input)="updateFilter('serial', $any($event.target).value)">
+        <input type="text" placeholder="Serial..." [value]="filterSerial()"
+          (input)="updateFilter('serial', $any($event.target).value)">
       </div>
       <div class="filter-group">
         <span class="material-icons">category</span>
-        <input type="text" placeholder="Responsable..."
+        <input type="text" placeholder="Responsable..." [value]="filterResponsable()"
           (input)="updateFilter('responsable', $any($event.target).value)">
       </div>
       <div class="filter-group">
         <span class="material-icons">category</span>
-        <input type="text" placeholder="Placa..." (input)="updateFilter('placa', $any($event.target).value)">
+        <input type="text" placeholder="Placa..." [value]="filterPlaca()"
+          (input)="updateFilter('placa', $any($event.target).value)">
       </div>
 
       <div class="filter-group">
         <span class="material-icons">category</span>
-        <input type="text" placeholder="Fabricante..." (input)="updateFilter('fabricante', $any($event.target).value)">
+        <input type="text" placeholder="Fabricante..." [value]="filterFabricante()"
+          (input)="updateFilter('fabricante', $any($event.target).value)">
       </div>
 
       <div class="filter-group">
         <span class="material-icons">category</span>
-        <input type="text" placeholder="Modelo..." (input)="updateFilter('modelo', $any($event.target).value)">
+        <input type="text" placeholder="Modelo..." [value]="filterModelo()"
+          (input)="updateFilter('modelo', $any($event.target).value)">
       </div>
 
       <div class="filter-group">
         <span class="material-icons">settings_suggest</span>
-        <select (change)="updateFilter('estado', $any($event.target).value)">
+        <select [value]="filterEstado()" (change)="updateFilter('estado', $any($event.target).value)">
           <option value="">Todos los estados</option>
           @for (estado of estados(); track estado) {
           <option value="{{ estado }}">{{ estado }}</option>
           }
         </select>
       </div>
-      <button class="primary-btn">
+      <button class="primary-btn" (click)="downloadFilteredCsv()" [disabled]="inventarioFiltrado().length === 0">
         <span class="material-icons">table_chart</span> CSV
       </button>
-      <button class="primary-btn"
-        (click)="updateFilter('tienda', ''); updateFilter('tipo', ''); updateFilter('estado', ''); updateFilter('serial', ''); updateFilter('placa', ''); updateFilter('fabricante', ''); updateFilter('modelo', ''); updateFilter('responsable', '')">
-        <span class="material-icons">table_chart</span> Borrar Filtros
+      <button class="primary-btn" (click)="cleanFilter()">
+        <span class="material-icons">cancel</span> Borrar Filtros
       </button>
     </div>
   </div>
