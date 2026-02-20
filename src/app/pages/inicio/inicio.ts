@@ -14,7 +14,19 @@ import {
 import { MatFormField, MatLabel } from "@angular/material/form-field";
 import { MatSelect, MatOption } from "@angular/material/select";
 import { MatButtonModule } from '@angular/material/button';
-import { catchError, debounceTime, distinctUntilChanged, finalize, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  finalize,
+  forkJoin,
+  map,
+  of,
+  shareReplay,
+  switchMap,
+  tap
+} from 'rxjs';
 
 import { TiendaEstadoService } from '../../core/services/tienda-estado.service';
 
@@ -42,6 +54,8 @@ export class Inicio implements OnInit {
   private tiendaEstadoService = inject(TiendaEstadoService);
 
   readonly chartDirectives = viewChildren(BaseChartDirective);
+  private monthlyStatsCache = new Map<string, DashboardStatsResponse>();
+  private monthlyStatsInFlight = new Map<string, Observable<DashboardStatsResponse>>();
   private readonly monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   private readonly pieColors = [
     '#FF6384',
@@ -252,9 +266,7 @@ export class Inicio implements OnInit {
         tap(() => this.isLoading.set(true)),
         switchMap((filtros) => {
           const filteredRequest = this.dashboardService.getStats(filtros);
-          const monthlyRequest = this.dashboardService.getStats({
-            tiendaId: filtros.tiendaId ?? null,
-          });
+          const monthlyRequest = this.getMonthlyStatsCached(filtros.tiendaId ?? null);
 
           const request$ = this.shouldDecoupleMonthlyChart(filtros)
             ? forkJoin({
@@ -326,6 +338,29 @@ export class Inicio implements OnInit {
     const hasEstadoFilter = (filters.estados?.length ?? 0) > 0;
     const hasTipoFilter = (filters.tipos?.length ?? 0) > 0;
     return hasEstadoFilter || hasTipoFilter;
+  }
+
+  private getMonthlyStatsCached(tiendaId: number | null): Observable<DashboardStatsResponse> {
+    const cacheKey = tiendaId === null ? 'all' : String(tiendaId);
+
+    const cached = this.monthlyStatsCache.get(cacheKey);
+    if (cached) {
+      return of(cached);
+    }
+
+    const inFlight = this.monthlyStatsInFlight.get(cacheKey);
+    if (inFlight) {
+      return inFlight;
+    }
+
+    const request$ = this.dashboardService.getStats({ tiendaId }).pipe(
+      tap((data) => this.monthlyStatsCache.set(cacheKey, data)),
+      finalize(() => this.monthlyStatsInFlight.delete(cacheKey)),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+
+    this.monthlyStatsInFlight.set(cacheKey, request$);
+    return request$;
   }
 
   private filtersAreEqual(a: DashboardFilters, b: DashboardFilters): boolean {

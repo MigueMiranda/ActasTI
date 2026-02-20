@@ -73,7 +73,6 @@ export class CrearActaComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.cargarListas();
-    this.cargarInventario();
     this.setupListeners();
     this.recuperarBorrador();
   }
@@ -82,13 +81,6 @@ export class CrearActaComponent implements OnInit, OnDestroy {
     this.tiendaEstadoService.getTienda().subscribe({
       next: (data) => this.tiendas.set(data),
       error: (err) => console.error('Error cargando tiendas:', err)
-    });
-  }
-
-  cargarInventario() {
-    this.inventarioService.getInventario().subscribe({
-      next: data => this.tiendaEstadoService.inventario.set(data),
-      error: err => console.error('Error cargando inventario:', err)
     });
   }
 

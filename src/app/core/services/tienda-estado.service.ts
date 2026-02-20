@@ -1,7 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from './../../../environments/environment';
-import { catchError, of } from 'rxjs';
+import { Observable, catchError, of } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
 
 import { TiendaModel } from '../models/tienda-estado.model';
 import { InventarioModel } from '../models/inventario.model';
@@ -14,6 +15,7 @@ export class TiendaEstadoService {
   private http = inject(HttpClient);
   private inventarioService = inject(InventarioService);
   private apiUrl = environment.API_URL;
+  private tiendasCache$?: Observable<TiendaModel[]>;
 
   public inventario = signal<InventarioModel[]>([]);
 
@@ -59,6 +61,13 @@ export class TiendaEstadoService {
   });
 
   getTienda() {
-    return this.http.get<TiendaModel[]>(`${this.apiUrl}/tiendas`)
+    if (!this.tiendasCache$) {
+      this.tiendasCache$ = this.http.get<TiendaModel[]>(`${this.apiUrl}/tiendas`).pipe(
+        map((data) => (Array.isArray(data) ? data : [])),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+
+    return this.tiendasCache$;
   }
 }
