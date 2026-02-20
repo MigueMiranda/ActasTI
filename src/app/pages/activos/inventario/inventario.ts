@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventarioModel } from '../../../core/models/inventario.model';
 import { InventarioService } from '../../../core/services/inventario.service';
+import { catchError, of, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-inventario',
@@ -60,7 +61,7 @@ export class InventarioComponent implements OnInit {
   });
 
   // Calcula el total de páginas
-  totalPages = computed(() => Math.ceil(this.inventarioFiltrado().length / this.pageSize()));
+  totalPages = computed(() => Math.max(1, Math.ceil(this.inventarioFiltrado().length / this.pageSize())));
 
   constructor(private inventarioService: InventarioService) { }
 
@@ -70,9 +71,17 @@ export class InventarioComponent implements OnInit {
 
   cargarInventario(): void {
     this.isLoading.set(true);
-    this.inventarioService.getInventario().subscribe({
+    this.inventarioService.getInventario().pipe(
+      switchMap((data) => {
+        if (data.length > 0) {
+          return of(data);
+        }
+        return this.inventarioService.getInventario(true).pipe(
+          catchError(() => of(data))
+        );
+      })
+    ).subscribe({
       next: (data) => {
-        // Asegúrate que 'data' sea el array. Si el backend envía { data: [...] }, usa data.data
         this.inventario.set(Array.isArray(data) ? data : []);
         this.isLoading.set(false);
       },

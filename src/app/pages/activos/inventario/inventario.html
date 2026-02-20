@@ -81,7 +81,7 @@
       <tbody>
         @if (isLoading()) {
         <tr>
-          <td colspan="8">Cargando...</td>
+          <td colspan="9">Cargando...</td>
         </tr>
         } @else {
         @for (item of paginatedData(); track item.serial) {
@@ -102,7 +102,7 @@
         </tr>
         } @empty {
         <tr>
-          <td colspan="8">Sin resultados</td>
+          <td colspan="9">Sin resultados</td>
         </tr>
         }
         }
