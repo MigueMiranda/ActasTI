@@ -48,7 +48,7 @@ export class UserService {
       () => this.http.get<unknown>(`${this.apiUrl}/username/${safeUsername}`),
     ];
 
-    const request$ = this.requestUntilMatch(requests, 0).pipe(
+    const request$ = this.requestUntilMatch(requests, 0, cleaned).pipe(
       tap((user) => this.byUsernameCache.set(cacheKey, user)),
       finalize(() => this.byUsernameInFlight.delete(cacheKey)),
       shareReplay({ bufferSize: 1, refCount: false })
@@ -60,20 +60,21 @@ export class UserService {
 
   private requestUntilMatch(
     requests: Array<() => Observable<unknown>>,
-    index: number
+    index: number,
+    expectedUsername: string
   ): Observable<UserModel> {
     if (index >= requests.length) {
       return throwError(() => new Error('Usuario no encontrado'));
     }
 
     return requests[index]().pipe(
-      map((response) => this.normalizeUserResponse(response)),
+      map((response) => this.normalizeUserResponse(response, expectedUsername)),
       catchError((err) => {
         const status = this.getStatusCode(err);
         if (status === 401 || status === 403 || (status !== null && status >= 500)) {
           return throwError(() => err);
         }
-        return this.requestUntilMatch(requests, index + 1);
+        return this.requestUntilMatch(requests, index + 1, expectedUsername);
       })
     );
   }
@@ -87,46 +88,60 @@ export class UserService {
     return typeof status === 'number' ? status : null;
   }
 
-  private normalizeUserResponse(response: unknown): UserModel {
-    const candidate = this.extractUserCandidate(response);
-    if (this.isUserModel(candidate)) {
-      return candidate;
+  private normalizeUserResponse(response: unknown, expectedUsername: string): UserModel {
+    const candidates = this.extractUserCandidates(response);
+    const expected = this.normalizeUsername(expectedUsername);
+
+    const exactMatch = candidates.find((candidate) => {
+      return this.normalizeUsername(candidate.username) === expected;
+    });
+
+    if (exactMatch) {
+      return exactMatch;
     }
 
-    throw new Error('Respuesta de usuario sin formato esperado');
+    throw new Error('Respuesta de usuario sin coincidencia exacta');
   }
 
-  private extractUserCandidate(response: unknown): unknown {
+  private extractUserCandidates(response: unknown): UserModel[] {
+    const candidates: unknown[] = [];
+
     if (Array.isArray(response)) {
-      return response[0];
+      candidates.push(...response);
+      return candidates.filter((candidate): candidate is UserModel => this.isUserModel(candidate));
     }
 
     if (!response || typeof response !== 'object') {
-      return response;
+      return [];
     }
 
     const payload = response as Record<string, unknown>;
-    if (payload['user'] && typeof payload['user'] === 'object') {
-      return payload['user'];
+    candidates.push(payload);
+
+    const sources = [
+      payload['user'],
+      payload['usuario'],
+      payload['dataValues'],
+      payload['data'],
+      payload['rows'],
+      payload['users'],
+      payload['results'],
+      payload['result'],
+    ];
+
+    for (const source of sources) {
+      if (Array.isArray(source)) {
+        candidates.push(...source);
+      } else if (source && typeof source === 'object') {
+        candidates.push(source);
+      }
     }
 
-    if (payload['usuario'] && typeof payload['usuario'] === 'object') {
-      return payload['usuario'];
-    }
+    return candidates.filter((candidate): candidate is UserModel => this.isUserModel(candidate));
+  }
 
-    if (payload['dataValues'] && typeof payload['dataValues'] === 'object') {
-      return payload['dataValues'];
-    }
-
-    if (Array.isArray(payload['data'])) {
-      return payload['data'][0];
-    }
-
-    if (payload['data'] && typeof payload['data'] === 'object') {
-      return payload['data'];
-    }
-
-    return response;
+  private normalizeUsername(value: string): string {
+    return value.trim().toLowerCase();
   }
 
   private isUserModel(value: unknown): value is UserModel {
