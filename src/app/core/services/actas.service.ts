@@ -29,6 +29,18 @@ export class ActasService {
     return this.http.get<any[]>(`${this.apiUrl}/movimientos`);
   }
 
+  reactivarAsignacion(asignacionId: number | string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/asignacion/reactivar-asignacion`, {
+      asignacionId
+    });
+  }
+
+  reactivarAsignacionPorToken(token: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/asignacion/reactivar-asignacion-token`, {
+      token
+    });
+  }
+
   getActaPdf(fileName: string): Observable<Blob> {
     const safeName = encodeURIComponent(fileName);
     const candidates = this.buildActaCandidates(safeName);

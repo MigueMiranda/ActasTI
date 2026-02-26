@@ -16,6 +16,7 @@ import { InventarioService } from '../../../core/services/inventario.service';
 import { TiendaEstadoService } from '../../../core/services/tienda-estado.service';
 import { ActasService } from '../../../core/services/actas.service';
 import { Dialog } from '../../../components/dialog/dialog';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   standalone: true,
@@ -41,6 +42,7 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   private inventarioService = inject(InventarioService);
   private tiendaEstadoService = inject(TiendaEstadoService);
   private actasService = inject(ActasService);
+  private notifications = inject(NotificationService);
 
   // Signals para reactividad inmediata
   activosAgregados = signal<any[]>([]);
@@ -80,7 +82,10 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   cargarListas() {
     this.tiendaEstadoService.getTienda().subscribe({
       next: (data) => this.tiendas.set(data),
-      error: (err) => console.error('Error cargando tiendas:', err)
+      error: (err) => {
+        console.error('Error cargando tiendas:', err);
+        this.notifications.error('No se pudieron cargar las tiendas');
+      }
     });
   }
 
@@ -223,10 +228,16 @@ export class CrearActaComponent implements OnInit, OnDestroy {
 
     this.actasService.notificarActa(payload).subscribe({
       next: () => {
+        this.notifications.success('Acta creada correctamente');
         this.resetFormulario();
       },
       error: (err) => {
         console.error('Error enviando acta:', err);
+        const msg =
+          err?.error?.message
+          || err?.error?.error
+          || 'No se pudo crear el acta. Inténtalo nuevamente.';
+        this.notifications.error(msg);
       }
     });
   }

@@ -29,6 +29,7 @@ import {
 } from 'rxjs';
 
 import { TiendaEstadoService } from '../../core/services/tienda-estado.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 Chart.register(...registerables);
 
@@ -52,8 +53,10 @@ export class Inicio implements OnInit {
   private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
   private tiendaEstadoService = inject(TiendaEstadoService);
+  private notifications = inject(NotificationService);
 
   readonly chartDirectives = viewChildren(BaseChartDirective);
+  private dashboardErrorNotified = false;
   private monthlyStatsCache = new Map<string, DashboardStatsResponse>();
   private monthlyStatsInFlight = new Map<string, Observable<DashboardStatsResponse>>();
   private readonly monthLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -236,7 +239,10 @@ export class Inicio implements OnInit {
       next: (data) => {
         this.tiendas.set(data);
       },
-      error: (err) => console.error("Error al cargar tiendas", err)
+      error: (err) => {
+        console.error("Error al cargar tiendas", err);
+        this.notifications.error('No se pudieron cargar las tiendas');
+      }
     });
   }
 
@@ -280,6 +286,10 @@ export class Inicio implements OnInit {
           return request$.pipe(
             catchError((err) => {
               console.error('Error dashboard', err);
+              if (!this.dashboardErrorNotified) {
+                this.notifications.error('No se pudo actualizar el dashboard');
+                this.dashboardErrorNotified = true;
+              }
               this.resetDashboard();
               return of(null);
             }),
@@ -292,6 +302,8 @@ export class Inicio implements OnInit {
         if (!response) {
           return;
         }
+
+        this.dashboardErrorNotified = false;
 
         this.totalActas.set(response.filtered.kpis.totalActas);
         this.totalActivos.set(response.filtered.kpis.totalActivos);

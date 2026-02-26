@@ -314,3 +314,30 @@ $text-muted: #666;
     }
   }
 }
+
+.mat-mdc-snack-bar-container.toast-success .mdc-snackbar__surface {
+  background: #15803d !important;
+  color: #fff !important;
+}
+
+.mat-mdc-snack-bar-container.toast-success .mdc-snackbar__label {
+  color: #fff !important;
+}
+
+.mat-mdc-snack-bar-container.toast-error .mdc-snackbar__surface {
+  background: #b91c1c !important;
+  color: #fff !important;
+}
+
+.mat-mdc-snack-bar-container.toast-error .mdc-snackbar__label {
+  color: #fff !important;
+}
+
+.mat-mdc-snack-bar-container.toast-info .mdc-snackbar__surface {
+  background: #0369a1 !important;
+  color: #fff !important;
+}
+
+.mat-mdc-snack-bar-container.toast-info .mdc-snackbar__label {
+  color: #fff !important;
+}

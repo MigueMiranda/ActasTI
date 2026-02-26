@@ -1,19 +1,26 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { ActasService } from './../../../core/services/actas.service';
 import { CommonModule } from '@angular/common';
+import { finalize } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
+import { Dialog } from '../../../components/dialog/dialog';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-listar-acta',
   imports: [
-    CommonModule,
+    CommonModule
   ],
   templateUrl: './listar-acta.html',
   styleUrl: './listar-acta.scss',
 })
 export class ListarActa implements OnInit {
+  private dialog = inject(MatDialog);
+  private notifications = inject(NotificationService);
   movimientos = signal<any[]>([]);
   paginaActual = signal(1);
   itemsPorPagina = 10;
+  reactivandoIds = signal<Set<number>>(new Set<number>());
 
   // Lógica de ordenamiento y paginación reactiva
   movimientosPaginados = computed(() => {
@@ -113,6 +120,7 @@ export class ListarActa implements OnInit {
       },
       error: (err) => {
         console.error('No se pudo abrir el acta', err);
+        this.notifications.error('No se pudo abrir el acta');
         if (popup) {
           const status = typeof err?.status === 'number' ? err.status : 'sin código';
           popup.document.body.textContent = `No se pudo abrir el acta (status: ${status}). Verifica tu sesión o la ruta del archivo.`;
@@ -127,5 +135,90 @@ export class ListarActa implements OnInit {
       return null;
     }
     return candidate;
+  }
+
+  tieneActa(mov: any): boolean {
+    const acta = typeof mov?.acta === 'string' ? mov.acta.trim() : '';
+    if (!acta) {
+      return false;
+    }
+
+    const normalized = acta.toLowerCase();
+    return normalized !== 'n/a' && normalized !== 'pendiente';
+  }
+
+  puedeReactivar(mov: any): boolean {
+    if (this.tieneActa(mov)) {
+      return false;
+    }
+
+    const estado = String(mov?.asignacion?.estado_asignacion ?? '').trim().toLowerCase();
+    return estado === 'cancelado';
+  }
+
+  estaReactivando(movimientoId: number): boolean {
+    return this.reactivandoIds().has(movimientoId);
+  }
+
+  reactivar(mov: any, event: MouseEvent): void {
+    event.stopPropagation();
+
+    if (!this.puedeReactivar(mov) || this.estaReactivando(mov.id)) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(Dialog, {
+      width: '420px',
+      data: {
+        titulo: 'Reactivar asignación',
+        mensaje: `Asignación #${mov.id}`,
+        pregunta: 'Se reenviará el correo con un nuevo vencimiento. ¿Deseas continuar?',
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((confirmar) => {
+      if (!confirmar) {
+        return;
+      }
+
+      this.procesarReactivacion(mov);
+    });
+  }
+
+  private procesarReactivacion(mov: any): void {
+    const nextSet = new Set(this.reactivandoIds());
+    nextSet.add(mov.id);
+    this.reactivandoIds.set(nextSet);
+
+    const asignacionId = mov?.asignacion?.id ?? mov?.asignacion_id ?? null;
+    if (asignacionId === null) {
+      const updatedSet = new Set(this.reactivandoIds());
+      updatedSet.delete(mov.id);
+      this.reactivandoIds.set(updatedSet);
+      this.notifications.error('No se encontró el ID de asignación para reactivar.');
+      return;
+    }
+
+    this.actasService.reactivarAsignacion(asignacionId).pipe(
+      finalize(() => {
+        const updatedSet = new Set(this.reactivandoIds());
+        updatedSet.delete(mov.id);
+        this.reactivandoIds.set(updatedSet);
+      })
+    ).subscribe({
+      next: (res: any) => {
+        const msg = res?.message || 'Asignación reactivada y correo reenviado.';
+        this.notifications.success(msg);
+        this.cargarMovimientos();
+      },
+      error: (err) => {
+        console.error('No se pudo reactivar la asignación', err);
+        const msg =
+          err?.error?.message
+          || err?.error?.error
+          || 'No se pudo reactivar la asignación. Revisa permisos o estado de la solicitud.';
+        this.notifications.error(msg);
+      }
+    });
   }
 }

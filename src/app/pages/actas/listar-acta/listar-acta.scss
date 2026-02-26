@@ -1,0 +1,46 @@
+.btn-reactivar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #080808;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-reactivar:hover:not(:disabled) {
+  background: #005292;
+}
+
+.btn-reactivar .material-icons {
+  font-size: 20px;
+}
+
+.btn-reactivar .material-icons.rotate {
+  animation: spin-reactivar 0.9s linear infinite;
+}
+
+.btn-reactivar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.no-acta {
+  color: #475569;
+  font-size: 13px;
+}
+
+@keyframes spin-reactivar {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

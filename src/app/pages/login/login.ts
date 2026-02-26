@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-login',
@@ -20,6 +21,7 @@ export class Login implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
+  private notifications = inject(NotificationService);
 
   // Creo las variables para el login
   usuario: string = '';
@@ -38,12 +40,14 @@ export class Login implements OnInit {
 
     if (!usuario || !this.password) {
       this.mensaje_error = 'Usuario o contraseña incorrectos';
+      this.notifications.error(this.mensaje_error);
       return;
     }
 
     this.authService.login(usuario, this.password)
       .subscribe({
         next: () => {
+          this.notifications.success('Inicio de sesión exitoso');
           const redirect = this.route.snapshot.queryParamMap.get('redirect');
 
           this.router.navigateByUrl(
@@ -55,6 +59,7 @@ export class Login implements OnInit {
           this.mensaje_error = err?.status === 401
             ? 'Usuario o contraseña incorrectos'
             : 'No fue posible iniciar sesión';
+          this.notifications.error(this.mensaje_error);
         }
       });
   }

@@ -2,19 +2,18 @@ import { Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon'
 
 @Component({
   standalone: true,
   selector: 'app-dialog',
   template: `
-    <h2 mat-dialog-title>Confirmar generación</h2>
+    <h2 mat-dialog-title>{{ data.titulo || 'Confirmar generación' }}</h2>
 
     <mat-dialog-content>
       <p>
         {{ data.mensaje }}
       </p>
-      <p>¿Deseas continuar?</p>
+      <p>{{ data.pregunta || '¿Deseas continuar?' }}</p>
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
@@ -32,7 +31,7 @@ export class Dialog {
 
   constructor(
     private dialogRef: MatDialogRef<Dialog>,
-    @Inject(MAT_DIALOG_DATA) public data: { mensaje: string }
+    @Inject(MAT_DIALOG_DATA) public data: { mensaje: string; titulo?: string; pregunta?: string }
   ) { }
 
   cancelar() {

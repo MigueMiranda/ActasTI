@@ -1,9 +1,10 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventarioModel } from '../../../core/models/inventario.model';
 import { InventarioService } from '../../../core/services/inventario.service';
 import { catchError, of, switchMap } from 'rxjs';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-inventario',
@@ -13,6 +14,7 @@ import { catchError, of, switchMap } from 'rxjs';
   styleUrls: ['./inventario.scss'],
 })
 export class InventarioComponent implements OnInit {
+  private notifications = inject(NotificationService);
   inventario = signal<InventarioModel[]>([]);
   searchTerm = signal('');
   isLoading = signal(true);
@@ -87,6 +89,7 @@ export class InventarioComponent implements OnInit {
       },
       error: (err) => {
         console.error('🔴 Error:', err);
+        this.notifications.error('No se pudo cargar el inventario');
         this.isLoading.set(false);
       }
     });

@@ -25,8 +25,8 @@
                 <td>{{ mov.tienda?.nombre }}</td>
                 <td>{{ mov.users.name }}</td>
                 <td>
-                    <span class="status" [ngClass]="mov.estadoAsignacion?.toLowerCase()">
-                        {{ mov.estadoAsignacion }}
+                    <span class="status" [ngClass]="mov.asignacion.estado_asignacion?.toLowerCase()">
+                        {{ mov.asignacion.estado_asignacion }}
                     </span>
                 </td>
 
@@ -34,9 +34,17 @@
                 <td>{{ mov.ubicacionElemento }}</td>
 
                 <td>
-                    @if (mov.acta && mov.acta !== 'N/A' && mov.acta !== 'pendiente') {
+                    @if (tieneActa(mov)) {
                     <button class="btn-pdf" (click)="verActa(mov.acta, $event)">
                         <span class="material-icons">picture_as_pdf</span>
+                    </button>
+                    } @else if (puedeReactivar(mov)) {
+                    <button class="btn-reactivar" [disabled]="estaReactivando(mov.id)" (click)="reactivar(mov, $event)"
+                        [attr.aria-label]="estaReactivando(mov.id) ? 'Reactivando asignación' : 'Reactivar asignación'"
+                        [attr.title]="estaReactivando(mov.id) ? 'Reactivando...' : 'Reactivar'">
+                        <span class="material-icons" [class.rotate]="estaReactivando(mov.id)">
+                            {{ estaReactivando(mov.id) ? 'autorenew' : 'refresh' }}
+                        </span>
                     </button>
                     } @else {
                     <span class="no-acta">Sin acta</span>

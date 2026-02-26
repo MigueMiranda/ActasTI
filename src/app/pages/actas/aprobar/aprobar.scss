@@ -14,3 +14,20 @@
 .error {
     color: #c62828;
 }
+
+.btn-reactivar-token {
+    margin-top: 14px;
+    border: none;
+    border-radius: 8px;
+    background: #005292;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    cursor: pointer;
+}
+
+.btn-reactivar-token:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

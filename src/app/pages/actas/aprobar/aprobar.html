@@ -29,6 +29,11 @@
         <div class="icon">❌</div>
         <h2>No se pudo procesar</h2>
         <p class="msg-detalle">{{ mensaje }}</p>
+        @if (mostrarReactivarPorToken) {
+        <button class="btn-reactivar-token" [disabled]="reactivandoToken" (click)="solicitarReactivacionPorToken()">
+            {{ reactivandoToken ? 'Enviando...' : 'Solicitar nuevo enlace' }}
+        </button>
+        }
     </div>
     }
 
