@@ -41,21 +41,20 @@ export class AuthService {
 
   private readonly sessionKey = 'actasti_auth_session';
   private readonly sessionDurationMs = 8 * 60 * 60 * 1000;
+  private sessionCache: AuthSession | null | undefined = undefined;
 
   login(username: string, password: string) {
     return this.http.post<AuthLoginResponse>(`${this.apiUrl}/login`, { username, password })
       .pipe(
         map((response) => this.buildSession(response, username)),
-        tap((session) => {
-          sessionStorage.setItem(this.sessionKey, JSON.stringify(session));
-        }),
+        tap((session) => this.saveSession(session)),
       );
   }
 
 
 
   logout(): void {
-    sessionStorage.removeItem(this.sessionKey);
+    this.clearSession();
   }
 
   isAuthenticated(): boolean {
@@ -77,16 +76,25 @@ export class AuthService {
     return user;
   }
 
+  getToken(): string | null {
+    return this.getSession()?.token ?? null;
+  }
+
   private getSession(): AuthSession | null {
+    if (this.sessionCache !== undefined) {
+      return this.sessionCache;
+    }
+
     const raw = sessionStorage.getItem(this.sessionKey);
     if (!raw) {
+      this.sessionCache = null;
       return null;
     }
 
     try {
       const parsed = JSON.parse(raw) as Partial<AuthSession>;
       if (!parsed || typeof parsed !== 'object') {
-        this.logout();
+        this.clearSession();
         return null;
       }
 
@@ -99,15 +107,26 @@ export class AuthService {
         typeof parsed.expiresAt !== 'number' ||
         parsed.expiresAt <= parsed.issuedAt
       ) {
-        this.logout();
+        this.clearSession();
         return null;
       }
 
-      return parsed as AuthSession;
+      this.sessionCache = parsed as AuthSession;
+      return this.sessionCache;
     } catch {
-      this.logout();
+      this.clearSession();
       return null;
     }
+  }
+
+  private saveSession(session: AuthSession): void {
+    this.sessionCache = session;
+    sessionStorage.setItem(this.sessionKey, JSON.stringify(session));
+  }
+
+  private clearSession(): void {
+    this.sessionCache = null;
+    sessionStorage.removeItem(this.sessionKey);
   }
 
   private buildSession(response: AuthLoginResponse, fallbackUsername: string): AuthSession {

@@ -23,9 +23,8 @@ export class Layout {
   darkMode = false;
 
   ngOnInit() {
-    const user = this.authService.getUsername();
-    this.userName = user?.trim().split(' ')[0] || '';
-    console.log("Usuario: ", this.userName);
+    const user = this.authService.getUsername() ?? '';
+    this.userName = user.trim().split(/\s+/)[0] ?? '';
   }
 
   toggleSidebar() {

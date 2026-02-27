@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 
@@ -27,6 +28,7 @@ export class Login implements OnInit {
   usuario: string = '';
   password: string = '';
   mensaje_error: string = '';
+  isSubmitting = false;
 
   ngOnInit(): void {
     if (this.authService.isAuthenticated()) {
@@ -36,6 +38,10 @@ export class Login implements OnInit {
 
   // Creo el método para el login
   login() {
+    if (this.isSubmitting) {
+      return;
+    }
+
     const usuario = this.usuario.trim();
 
     if (!usuario || !this.password) {
@@ -44,10 +50,17 @@ export class Login implements OnInit {
       return;
     }
 
+    this.isSubmitting = true;
     this.authService.login(usuario, this.password)
+      .pipe(
+        finalize(() => {
+          this.isSubmitting = false;
+        })
+      )
       .subscribe({
-        next: () => {
-          this.notifications.success('Inicio de sesión exitoso');
+        next: (session) => {
+          const nombre = session.name || session.username;
+          this.notifications.success(`Bienvenido ${nombre}`);
           const redirect = this.route.snapshot.queryParamMap.get('redirect');
 
           this.router.navigateByUrl(
