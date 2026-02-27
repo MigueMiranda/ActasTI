@@ -11,7 +11,6 @@ import { NotificationService } from '../../../core/services/notification.service
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './inventario.html',
-  styleUrls: ['./inventario.scss'],
 })
 export class InventarioComponent implements OnInit {
   private notifications = inject(NotificationService);

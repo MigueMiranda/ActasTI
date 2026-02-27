@@ -14,7 +14,6 @@ import { NotificationService } from '../../core/services/notification.service';
     FormsModule
   ],
   templateUrl: './login.html',
-  styleUrl: './login.scss',
 })
 export class Login implements OnInit {
 

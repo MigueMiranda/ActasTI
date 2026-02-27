@@ -45,7 +45,6 @@ Chart.register(...registerables);
     MatButtonModule,
   ],
   templateUrl: './inicio.html',
-  styleUrl: './inicio.scss',
 })
 export class Inicio implements OnInit {
 

@@ -11,7 +11,6 @@ import { AuthService } from '../../core/services/auth.service';
     RouterLinkWithHref
   ],
   templateUrl: './layout.html',
-  styleUrl: './layout.scss',
 })
 export class Layout {
   private authService = inject(AuthService);

@@ -8,7 +8,6 @@ import { NotificationService } from '../../../core/services/notification.service
   selector: 'app-aprobar',
   imports: [],
   templateUrl: './aprobar.html',
-  styleUrl: './aprobar.scss',
 })
 export class Aprobar implements OnInit {
   private readonly respuestasPermitidas = new Set(['aprobado', 'rechazado']);

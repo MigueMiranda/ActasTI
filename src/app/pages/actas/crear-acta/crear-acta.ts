@@ -22,7 +22,6 @@ import { NotificationService } from '../../../core/services/notification.service
   standalone: true,
   selector: 'app-crear-acta',
   templateUrl: './crear-acta.html',
-  styleUrls: ['./crear-acta.scss'],
   imports: [
     ReactiveFormsModule,
     MatStepperModule,

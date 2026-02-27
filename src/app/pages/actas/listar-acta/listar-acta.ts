@@ -12,7 +12,6 @@ import { NotificationService } from '../../../core/services/notification.service
     CommonModule
   ],
   templateUrl: './listar-acta.html',
-  styleUrl: './listar-acta.scss',
 })
 export class ListarActa implements OnInit {
   private dialog = inject(MatDialog);
