@@ -2,7 +2,7 @@
 
     @if (estado === 'cargando') {
     <div>
-        <h2>⏳ Procesando asignación...</h2>
+        <h2>⏳ Validando enlace de aprobación...</h2>
         <p>Por favor espera un momento</p>
     </div>
     }
@@ -29,11 +29,6 @@
         <div class="icon">❌</div>
         <h2>No se pudo procesar</h2>
         <p class="msg-detalle">{{ mensaje }}</p>
-        @if (mostrarReactivarPorToken) {
-        <button class="btn-reactivar-token" [disabled]="reactivandoToken" (click)="solicitarReactivacionPorToken()">
-            {{ reactivandoToken ? 'Enviando...' : 'Solicitar nuevo enlace' }}
-        </button>
-        }
     </div>
     }
 
