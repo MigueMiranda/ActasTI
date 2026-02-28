@@ -83,6 +83,7 @@
 
         <div class="actions">
           <button mat-button matStepperPrevious>Volver</button>
+          <button mat-button type="button" (click)="abrirDatosTecnicos()">+Datos Tecnicos</button>
           <button mat-raised-button color="primary" (click)="guardarActivoYContinuar()">
             {{ activosAgregados().length > 0 ? 'Agregar otro / Siguiente' : 'Agregar y Continuar' }}
           </button>

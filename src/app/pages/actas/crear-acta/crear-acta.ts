@@ -17,6 +17,7 @@ import { TiendaEstadoService } from '../../../core/services/tienda-estado.servic
 import { ActasService } from '../../../core/services/actas.service';
 import { Dialog } from '../../../components/dialog/dialog';
 import { NotificationService } from '../../../core/services/notification.service';
+import { DatosTecnicosDialogComponent, DatosTecnicosFormValue } from '../../../components/datos-tecnicos-dialog/datos-tecnicos-dialog';
 
 @Component({
   standalone: true,
@@ -47,6 +48,7 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   activosAgregados = signal<any[]>([]);
   tiendas = signal<any[]>([]);
   estados = this.tiendaEstadoService.estados;
+  datosTecnicosActivo = signal<DatosTecnicosFormValue>(this.buildEmptyDatosTecnicos());
   private destroy$ = new Subject<void>();
   private readonly draftKey = 'acta_borrador';
 
@@ -161,7 +163,9 @@ export class CrearActaComponent implements OnInit, OnDestroy {
       .subscribe((activo) => {
         if (activo) {
           this.autocompletarActivo(activo, campo);
+          return;
         }
+        this.limpiarDatosTecnicosActivo();
       });
   }
 
@@ -176,6 +180,7 @@ export class CrearActaComponent implements OnInit, OnDestroy {
       serial: activo.serial,
       placa: activo.placa
     }, { emitEvent: false });
+    this.datosTecnicosActivo.set(this.extraerDatosTecnicos(activo));
 
     // Bloquear el campo contrario para evitar conflictos
     if (campoTrigger === 'serial') {
@@ -187,11 +192,29 @@ export class CrearActaComponent implements OnInit, OnDestroy {
     }
   }
 
+  abrirDatosTecnicos(): void {
+    const dialogRef = this.dialog.open(DatosTecnicosDialogComponent, {
+      width: '820px',
+      maxWidth: '95vw',
+      panelClass: 'datos-tecnicos-dialog',
+      data: this.datosTecnicosActivo(),
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((result) => {
+        if (!result) {
+          return;
+        }
+        this.datosTecnicosActivo.set(this.normalizarDatosTecnicos(result));
+      });
+  }
+
   guardarActivoYContinuar() {
     if (this.activosForm.invalid) return;
 
     // Usamos update en el signal
-    this.activosAgregados.update(prev => [...prev, this.activosForm.getRawValue()]);
+    this.activosAgregados.update(prev => [...prev, this.construirActivoConDatosTecnicos()]);
 
     if (this.activosAgregados().length === 1) {
       this.responsableForm.disable();
@@ -204,6 +227,7 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   agregarElemento() {
     this.activosForm.reset();
     this.activosForm.enable();
+    this.limpiarDatosTecnicosActivo();
     this.stepper.selectedIndex = 1; // Volver al paso de activos
   }
 
@@ -224,9 +248,11 @@ export class CrearActaComponent implements OnInit, OnDestroy {
       activos: this.activosAgregados(),
       ubicacion: this.ubicacionForm.value
     };
+    const serialesMovimiento = this.extraerSeriales(payload.activos);
 
     this.actasService.notificarActa(payload).subscribe({
       next: () => {
+        this.tiendaEstadoService.refrescarActivosPorSerial(serialesMovimiento);
         this.notifications.success('Acta creada correctamente');
         this.resetFormulario();
       },
@@ -256,6 +282,7 @@ export class CrearActaComponent implements OnInit, OnDestroy {
     this.activosAgregados.set([]);
     this.responsableForm.enable();
     this.activosForm.enable();
+    this.limpiarDatosTecnicosActivo();
   }
 
   cancelarActa() {
@@ -309,5 +336,115 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private construirActivoConDatosTecnicos(): Record<string, unknown> {
+    const base = this.activosForm.getRawValue();
+    const datos = this.normalizarDatosTecnicos(this.datosTecnicosActivo());
+
+    return {
+      ...base,
+      ...datos,
+      ip_cableada: datos.ipCableada,
+      mac_cableada: datos.macCableada,
+      ip_inalambrica: datos.ipInalambrica,
+      mac_inalambrica: datos.macInalambrica,
+    };
+  }
+
+  private extraerDatosTecnicos(activo: Record<string, unknown>): DatosTecnicosFormValue {
+    return this.normalizarDatosTecnicos({
+      hostname: this.readString(activo['hostname']),
+      ipCableada: this.readString(activo['ipCableada'], activo['ip_cableada']),
+      macCableada: this.readString(activo['macCableada'], activo['mac_cableada']),
+      ipInalambrica: this.readString(activo['ipInalambrica'], activo['ip_inalambrica']),
+      macInalambrica: this.readString(activo['macInalambrica'], activo['mac_inalambrica']),
+      disco: this.readString(activo['disco'], activo['capacidadDisco'], activo['capacidad_disco']),
+      memoria: this.readString(activo['memoria']),
+      mouse: this.readChoice(activo['mouse'], activo['mause']),
+      teclado: this.readChoice(activo['teclado']),
+    });
+  }
+
+  private normalizarDatosTecnicos(value: Partial<DatosTecnicosFormValue>): DatosTecnicosFormValue {
+    return {
+      hostname: this.readString(value.hostname) ?? '',
+      ipCableada: this.readString(value.ipCableada) ?? '',
+      macCableada: this.readString(value.macCableada) ?? '',
+      ipInalambrica: this.readString(value.ipInalambrica) ?? '',
+      macInalambrica: this.readString(value.macInalambrica) ?? '',
+      disco: this.readString(value.disco) ?? '',
+      memoria: this.readString(value.memoria) ?? '',
+      mouse: this.readChoice(value.mouse),
+      teclado: this.readChoice(value.teclado),
+    };
+  }
+
+  private buildEmptyDatosTecnicos(): DatosTecnicosFormValue {
+    return {
+      hostname: '',
+      ipCableada: '',
+      macCableada: '',
+      ipInalambrica: '',
+      macInalambrica: '',
+      disco: '',
+      memoria: '',
+      mouse: '',
+      teclado: '',
+    };
+  }
+
+  private limpiarDatosTecnicosActivo(): void {
+    this.datosTecnicosActivo.set(this.buildEmptyDatosTecnicos());
+  }
+
+  private readString(...values: unknown[]): string | undefined {
+    for (const value of values) {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed.length > 0) {
+          return trimmed;
+        }
+      }
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        return String(value);
+      }
+    }
+    return undefined;
+  }
+
+  private readChoice(...values: unknown[]): 'Si' | 'No' | '' {
+    for (const value of values) {
+      if (typeof value === 'boolean') {
+        return value ? 'Si' : 'No';
+      }
+
+      if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (normalized === 'si' || normalized === 's' || normalized === 'true' || normalized === '1') {
+          return 'Si';
+        }
+        if (normalized === 'no' || normalized === 'n' || normalized === 'false' || normalized === '0') {
+          return 'No';
+        }
+      }
+    }
+    return '';
+  }
+
+  private extraerSeriales(activos: unknown[]): string[] {
+    if (!Array.isArray(activos)) {
+      return [];
+    }
+
+    return activos
+      .map((item) => {
+        if (!item || typeof item !== 'object') {
+          return '';
+        }
+        const serial = (item as Record<string, unknown>)['serial'];
+        return typeof serial === 'string' ? serial.trim() : '';
+      })
+      .filter((serial) => serial.length > 0);
   }
 }

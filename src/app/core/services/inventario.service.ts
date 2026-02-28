@@ -61,6 +61,10 @@ export class InventarioService {
     return this.http.get<InventarioModel>(`${this.apiUrl}/${campo}/${safeValue}`);
   }
 
+  invalidateCache(): void {
+    this.inventarioCache$ = undefined;
+  }
+
   private fetchInventarioEnvelope(params?: HttpParams): Observable<InventarioEnvelope> {
     return this.http.get<unknown>(this.apiUrl, { params }).pipe(
       map((payload) => this.normalizeInventarioResponse(payload))

@@ -869,3 +869,30 @@ app-aprobar {
     cursor: not-allowed;
   }
 }
+
+.datos-tecnicos-dialog {
+  .mat-mdc-dialog-surface {
+    border-radius: 14px;
+  }
+
+  .dt-content {
+    min-width: min(760px, 90vw);
+    padding-top: 8px;
+  }
+
+  .dt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .datos-tecnicos-dialog .dt-grid {
+    grid-template-columns: 1fr;
+  }
+}
