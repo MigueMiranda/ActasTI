@@ -1,59 +1,136 @@
 # ActasTI
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.4.
+Aplicación Angular para gestión de actas TI: creación de asignaciones, aprobación por enlace/token, consulta histórica de actas, dashboard de indicadores e inventario filtrable.
 
-## Development server
+## Stack técnico
 
-To start a local development server, run:
+- Angular `21`
+- Angular Material
+- RxJS
+- Chart.js + ng2-charts
+- Pruebas unitarias con `ng test` + Vitest (tipos `vitest/globals`)
 
-```bash
-ng serve
+## Módulos funcionales
+
+- `Login`: autenticación y persistencia de sesión.
+- `Inicio`: dashboard con KPIs, filtros y gráficas.
+- `Crear acta`: flujo por pasos, selección de activos, datos técnicos y notificación.
+- `Listar actas`: historial, descarga de PDF, reactivación de asignaciones.
+- `Inventario`: consulta con filtros, paginación y exportación CSV.
+- `Aprobar`: confirmación/rechazo mediante token de correo.
+
+## Estructura del proyecto
+
+```text
+src/app
+├── components/               # Layout, diálogo confirmación, diálogo datos técnicos
+├── core/
+│   ├── guards/               # AuthGuard
+│   ├── interceptors/         # authInterceptor (Bearer token)
+│   ├── models/               # Tipos de dominio
+│   ├── services/             # Auth, Dashboard, Inventario, Actas, etc.
+│   └── mocks/                # Datos de soporte para pruebas/desarrollo
+├── pages/
+│   ├── login/
+│   ├── inicio/
+│   ├── actas/                # aprobar, crear-acta, listar-acta
+│   └── activos/inventario/
+└── interceptors/             # ngrok interceptor (opcional)
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Configuración de entorno
 
-## Code scaffolding
+Archivo: `src/environments/environment.ts`
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- En `localhost` usa `http://localhost:3000/api/v1`
+- En host distinto usa `https://bk-actas-sodimac.onrender.com/api/v1`
 
-```bash
-ng generate component component-name
-```
+No existe `environment.prod.ts` en esta versión; la selección de API se hace por hostname.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Requisitos
 
-```bash
-ng generate --help
-```
+- Node.js LTS
+- npm
 
-## Building
-
-To build the project run:
+## Scripts disponibles
 
 ```bash
-ng build
+npm start          # ng serve
+npm run build      # build producción
+npm run watch      # build en modo watch
+npm test           # pruebas unitarias
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Ejecución local
 
 ```bash
-ng test
+npm install
+npm start
 ```
 
-## Running end-to-end tests
+Abrir `http://localhost:4200`.
 
-For end-to-end (e2e) testing, run:
+## Pruebas unitarias
+
+Ejecutar:
 
 ```bash
-ng e2e
+npm test -- --watch=false
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Estado actual de la suite:
 
-## Additional Resources
+- `19` archivos de prueba
+- `69` pruebas pasando
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Cobertura funcional validada:
+
+- Servicios:
+  - `AuthService`: login, sesión, expiración, token.
+  - `DashboardService`: saneamiento y serialización de filtros.
+  - `InventarioService`: caché, invalidación, búsqueda por campo.
+  - `ActasService`: creación, reactivación y descarga de PDF por rutas fallback.
+  - `UserService`: búsqueda por username y fallback de endpoint.
+  - `TiendaEstadoService`: estados/tipos dinámicos y refresco por serial.
+  - `NotificationService`: toasts de éxito/error.
+- Interceptores/guards:
+  - `authInterceptor`: adjunta token sólo cuando aplica.
+  - `AuthGuard`: acceso autenticado y redirección con `redirect`.
+- Componentes/páginas:
+  - `Layout`, `Dialog`.
+  - `Login`, `Inicio`, `Aprobar`, `CrearActaComponent`, `ListarActa`, `InventarioComponent`.
+- Routing:
+  - Verificación de rutas públicas/protegidas y composición en `Layout`.
+
+Para cobertura HTML:
+
+```bash
+npm test -- --watch=false --code-coverage
+```
+
+## Seguridad y sesión
+
+- `authInterceptor` agrega `Authorization: Bearer <token>` a requests del backend.
+- Excluye explícitamente el endpoint de login.
+- `AuthService` persiste sesión en `sessionStorage` (`actasti_auth_session`) y valida expiración local.
+- `Layout.logout()` limpia sesión y `localStorage`.
+
+## Integración con backend
+
+Principales rutas consumidas:
+
+- `POST /auth/login`
+- `GET /dashboard/stats`
+- `GET /elementos`, `GET /elementos/:campo/:valor`
+- `GET /tiendas`
+- `GET /movimientos`
+- `POST /asignacion/notificar-asignacion`
+- `POST /asignacion/confirmar-asignacion`
+- `POST /asignacion/reactivar-asignacion`
+- `POST /asignacion/reactivar-asignacion-token`
+
+## Notas de mantenimiento
+
+- Mantener tests alineados a Vitest (`vi.fn`, `vi.spyOn`, `expect.objectContaining`).
+- Evitar `jasmine.*` en nuevos specs.
+- Si se agregan rutas o servicios, crear/actualizar su spec correspondiente.
