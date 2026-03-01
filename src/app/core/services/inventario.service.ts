@@ -12,13 +12,6 @@ interface InventarioEnvelope {
   limit: number | null;
 }
 
-interface InventarioCandidate {
-  items: InventarioModel[];
-  total: number | null;
-  limit: number | null;
-  complete: boolean;
-}
-
 @Injectable({
   providedIn: 'root',
 })
@@ -84,30 +77,22 @@ export class InventarioService {
     }
 
     const boosted = await this.tryLargeLimit(initial);
-    if (boosted.complete) {
-      return boosted.items;
+    if (boosted.length > initial.items.length) {
+      return boosted;
     }
 
-    const seed: InventarioEnvelope = boosted.items.length > initial.items.length
-      ? {
-          items: boosted.items,
-          total: boosted.total ?? initial.total,
-          limit: boosted.limit ?? initial.limit,
-        }
-      : initial;
-
-    const mightBePaginated = seed.total !== null
-      ? seed.total > seed.items.length
-      : seed.items.length >= this.defaultPageSize;
+    const mightBePaginated = initial.total !== null
+      ? initial.total > initial.items.length
+      : initial.items.length >= this.defaultPageSize;
 
     if (!mightBePaginated) {
-      return seed.items;
+      return initial.items;
     }
 
-    return this.fetchByPagination(seed);
+    return this.fetchByPagination(initial);
   }
 
-  private async tryLargeLimit(initial: InventarioEnvelope): Promise<InventarioCandidate> {
+  private async tryLargeLimit(initial: InventarioEnvelope): Promise<InventarioModel[]> {
     const requestedLimit = Math.max(initial.total ?? 0, this.allItemsLimit);
     const attempts = [
       new HttpParams().set('limit', String(requestedLimit)),
@@ -119,40 +104,21 @@ export class InventarioService {
       new HttpParams().set('all', 'true'),
     ];
 
-    const baseCandidate: InventarioCandidate = {
-      items: initial.items,
-      total: initial.total,
-      limit: initial.limit,
-      complete: false,
-    };
+    let best = initial.items;
 
     for (const params of attempts) {
       try {
         const payload = await firstValueFrom(this.fetchInventarioEnvelope(params));
         const items = this.mergeUniqueItems(payload.items);
-        if (items.length <= initial.items.length) {
-          continue;
+        if (items.length > best.length) {
+          best = items;
         }
-
-        const total = payload.total ?? initial.total;
-        const limit = payload.limit ?? requestedLimit;
-        const completeByTotal = total !== null && items.length >= total;
-        const completeByShortPage = payload.limit !== null && items.length < payload.limit;
-
-        // Primer aumento significativo: se toma como mejor semilla para evitar
-        // hacer múltiples consultas de gran volumen innecesarias.
-        return {
-          items,
-          total,
-          limit,
-          complete: completeByTotal || completeByShortPage,
-        };
       } catch {
         // Siguiente formato de query
       }
     }
 
-    return baseCandidate;
+    return best;
   }
 
   private async fetchByPagination(initial: InventarioEnvelope): Promise<InventarioModel[]> {
