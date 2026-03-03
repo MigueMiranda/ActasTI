@@ -10,6 +10,8 @@ export class ActasService {
   private apiUrl = environment.API_URL;
   private readonly actasRelativeBase = '/public/actas';
 
+  private readonly sessionKey = 'actasti_auth_session';
+
   notificarActa(payload: any): Observable<any> {
     return this.http.post(
       `${this.apiUrl}/asignacion/notificar-asignacion`,
@@ -27,6 +29,10 @@ export class ActasService {
 
   getMovimientos() {
     return this.http.get<any[]>(`${this.apiUrl}/movimientos`);
+  }
+
+  getTiendas(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/tiendas`);
   }
 
   reactivarAsignacion(asignacionId: number | string): Observable<any> {
@@ -78,4 +84,3 @@ export class ActasService {
     );
   }
 }
-

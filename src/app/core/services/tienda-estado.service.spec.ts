@@ -8,6 +8,7 @@ import { TiendaEstadoService } from './tienda-estado.service';
 import { InventarioService } from './inventario.service';
 import { environment } from '../../../environments/environment';
 import { InventarioModel } from '../models/inventario.model';
+import { AuthService } from './auth.service';
 
 describe('TiendaEstadoService', () => {
   let service: TiendaEstadoService;
@@ -17,6 +18,7 @@ describe('TiendaEstadoService', () => {
     buscarPorCampo: ReturnType<typeof vi.fn>;
     invalidateCache: ReturnType<typeof vi.fn>;
   };
+  let authServiceSpy: { getUserStoreId: ReturnType<typeof vi.fn> };
 
   const baseItem: InventarioModel = {
     serial: 'S1',
@@ -38,6 +40,9 @@ describe('TiendaEstadoService', () => {
       buscarPorCampo: vi.fn(),
       invalidateCache: vi.fn(),
     };
+    authServiceSpy = {
+      getUserStoreId: vi.fn().mockReturnValue(1),
+    };
     inventarioServiceSpy.getInventario.mockReturnValue(of([
       baseItem,
       { ...baseItem, serial: 'S2', placa: 'P2', tipo: 'Monitor', estado: 'Asignado' },
@@ -52,6 +57,7 @@ describe('TiendaEstadoService', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: InventarioService, useValue: inventarioServiceSpy },
+        { provide: AuthService, useValue: authServiceSpy },
       ],
     });
     service = TestBed.inject(TiendaEstadoService);

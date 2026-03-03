@@ -9,6 +9,15 @@ describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
   const sessionKey = 'actasti_auth_session';
+  const createFakeJwt = (payload: Record<string, unknown>): string => {
+    const encode = (value: Record<string, unknown>) =>
+      btoa(JSON.stringify(value))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/g, '');
+
+    return `${encode({ alg: 'none', typ: 'JWT' })}.${encode(payload)}.signature`;
+  };
 
   beforeEach(() => {
     sessionStorage.clear();
@@ -43,13 +52,14 @@ describe('AuthService', () => {
     expect(req.request.body).toEqual({ username: 'MIRAM01', password: '1234' });
     req.flush({
       token: 'token-abc',
-      user: { username: 'MIRAM01', name: 'Miguel', cargo: 'Analista' },
+      user: { username: 'MIRAM01', name: 'Miguel', cargo: 'Analista', tiendaId: 5 },
     });
 
     expect(responseSession).toBeTruthy();
     expect(service.isAuthenticated()).toBe(true);
     expect(service.getUsername()).toBe('Miguel');
     expect(service.getToken()).toBe('token-abc');
+    expect(service.getUserStoreId()).toBe(5);
     expect(sessionStorage.getItem(sessionKey)).toContain('token-abc');
   });
 
@@ -81,5 +91,21 @@ describe('AuthService', () => {
 
     expect(service.isAuthenticated()).toBe(false);
     expect(sessionStorage.getItem(sessionKey)).toBeNull();
+  });
+
+  it('should resolve user store id from token when session has no tiendaId', () => {
+    const now = Date.now();
+    const token = createFakeJwt({ tiendaId: 9 });
+
+    sessionStorage.setItem(sessionKey, JSON.stringify({
+      username: 'MIRAM01',
+      token,
+      name: 'Miguel',
+      cargo: 'Analista',
+      issuedAt: now - 5_000,
+      expiresAt: now + 30_000,
+    }));
+
+    expect(service.getUserStoreId()).toBe(9);
   });
 });

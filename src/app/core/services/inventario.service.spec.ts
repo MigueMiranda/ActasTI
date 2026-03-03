@@ -77,4 +77,17 @@ describe('InventarioService', () => {
     expect(req.request.method).toBe('GET');
     req.flush(mockItem);
   });
+
+  it('should send store params when tiendaId is provided', () => {
+    service.getInventario(false, 7).subscribe();
+
+    const req = httpMock.expectOne((request) =>
+      request.url === `${environment.API_URL}/elementos`
+      && request.params.get('tiendaId') === '7'
+      && request.params.get('tienda_id') === '7'
+    );
+
+    expect(req.request.method).toBe('GET');
+    req.flush({ data: [mockItem], total: 1, limit: 100 });
+  });
 });

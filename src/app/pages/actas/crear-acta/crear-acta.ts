@@ -18,6 +18,7 @@ import { ActasService } from '../../../core/services/actas.service';
 import { Dialog } from '../../../components/dialog/dialog';
 import { NotificationService } from '../../../core/services/notification.service';
 import { DatosTecnicosDialogComponent, DatosTecnicosFormValue } from '../../../components/datos-tecnicos-dialog/datos-tecnicos-dialog';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   standalone: true,
@@ -43,6 +44,8 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   private tiendaEstadoService = inject(TiendaEstadoService);
   private actasService = inject(ActasService);
   private notifications = inject(NotificationService);
+  private authService = inject(AuthService);
+  private readonly userStoreId = this.authService.getUserStoreId();
 
   // Signals para reactividad inmediata
   activosAgregados = signal<any[]>([]);
@@ -82,12 +85,33 @@ export class CrearActaComponent implements OnInit, OnDestroy {
 
   cargarListas() {
     this.tiendaEstadoService.getTienda().subscribe({
-      next: (data) => this.tiendas.set(data),
+      next: (data) => {
+        this.tiendas.set(data);
+        this.preseleccionarTiendaUsuario(data);
+      },
       error: (err) => {
         console.error('Error cargando tiendas:', err);
         this.notifications.error('No se pudieron cargar las tiendas');
       }
     });
+  }
+
+  private preseleccionarTiendaUsuario(stores: Array<{ id: number }>): void {
+    if (this.userStoreId === null) {
+      return;
+    }
+
+    const currentStore = this.ubicacionForm.get('tiendaId')?.value;
+    if (typeof currentStore === 'number' && currentStore > 0) {
+      return;
+    }
+
+    const exists = stores.some((store) => store.id === this.userStoreId);
+    if (!exists) {
+      return;
+    }
+
+    this.ubicacionForm.patchValue({ tiendaId: this.userStoreId } as any);
   }
 
   get nombreTiendaSeleccionada(): string {

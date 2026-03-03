@@ -5,6 +5,9 @@ import { InventarioModel } from '../../../core/models/inventario.model';
 import { InventarioService } from '../../../core/services/inventario.service';
 import { catchError, of, switchMap } from 'rxjs';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { TiendaEstadoService } from '../../../core/services/tienda-estado.service';
+import { TiendaModel } from '../../../core/models/tienda-estado.model';
 
 @Component({
   selector: 'app-inventario',
@@ -14,11 +17,14 @@ import { NotificationService } from '../../../core/services/notification.service
 })
 export class InventarioComponent implements OnInit {
   private notifications = inject(NotificationService);
+  private authService = inject(AuthService);
+  private tiendaEstadoService = inject(TiendaEstadoService);
   inventario = signal<InventarioModel[]>([]);
   searchTerm = signal('');
   isLoading = signal(true);
 
-  filterTienda = signal('');
+  tiendas = signal<TiendaModel[]>([]);
+  filterTienda = signal<number | null>(null);
   filterTipo = signal('');
   filterEstado = signal('');
   filterSerial = signal('');
@@ -29,10 +35,16 @@ export class InventarioComponent implements OnInit {
 
   currentPage = signal(1);
   pageSize = signal(10);
+  storeSelectValue = computed(() => {
+    const storeId = this.filterTienda();
+    return storeId === null ? '' : String(storeId);
+  });
 
   inventarioFiltrado = computed(() => {
     return this.inventario().filter(item => {
-      const matchTienda = !this.filterTienda() || item.tienda.nombre.toString().toLowerCase().includes(this.filterTienda().toLowerCase());
+      const storeId = this.filterTienda();
+      const itemStoreId = this.getItemStoreId(item);
+      const matchTienda = storeId === null || itemStoreId === storeId;
       const matchSerial = !this.filterSerial() || item.serial.toLowerCase().includes(this.filterSerial().toLowerCase());
       const matchPlaca = !this.filterPlaca() || item.placa.toLowerCase().includes(this.filterPlaca().toLowerCase());
       const matchFabricante = !this.filterFabricante() || item.fabricante.toLowerCase().includes(this.filterFabricante().toLowerCase());
@@ -51,11 +63,6 @@ export class InventarioComponent implements OnInit {
     return [...new Set(unidades)].sort();
   });
 
-  tiendas = computed(() => {
-    const unidades = this.inventario().map(item => item.tienda.nombre);
-    return [...new Set(unidades)].sort();
-  });
-
   paginatedData = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.pageSize();
     return this.inventarioFiltrado().slice(startIndex, startIndex + this.pageSize());
@@ -67,29 +74,49 @@ export class InventarioComponent implements OnInit {
   constructor(private inventarioService: InventarioService) { }
 
   ngOnInit(): void {
+    const userStoreId = this.getDefaultUserStoreId();
+    this.cargarTiendas();
+    this.filterTienda.set(userStoreId);
+    console.log(this.filterTienda())
     this.cargarInventario();
   }
 
   cargarInventario(): void {
+    const selectedStoreId = this.filterTienda();
     this.isLoading.set(true);
-    this.inventarioService.getInventario().pipe(
+    this.inventarioService.getInventario(false, selectedStoreId).pipe(
       switchMap((data) => {
         if (data.length > 0) {
           return of(data);
         }
-        return this.inventarioService.getInventario(true).pipe(
+        return this.inventarioService.getInventario(true, selectedStoreId).pipe(
           catchError(() => of(data))
         );
       })
     ).subscribe({
       next: (data) => {
-        this.inventario.set(Array.isArray(data) ? data : []);
+        const items = Array.isArray(data) ? data : [];
+        this.inventario.set(items);
+        this.ensureUserStoreOption(items);
         this.isLoading.set(false);
       },
       error: (err) => {
         console.error('🔴 Error:', err);
         this.notifications.error('No se pudo cargar el inventario');
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  cargarTiendas(): void {
+    this.tiendaEstadoService.getTienda().subscribe({
+      next: (stores) => {
+        const normalizedStores = this.normalizeStores(stores);
+        this.tiendas.set(normalizedStores);
+        this.aplicarTiendaUsuarioSiExiste(normalizedStores);
+      },
+      error: () => {
+        this.notifications.error('No se pudo cargar el listado de tiendas');
       }
     });
   }
@@ -106,7 +133,7 @@ export class InventarioComponent implements OnInit {
   }
 
   cleanFilter() {
-    this.filterTienda.set('');
+    this.filterTienda.set(this.getDefaultUserStoreId());
     this.filterTipo.set('');
     this.filterEstado.set('');
     this.filterSerial.set('');
@@ -115,6 +142,7 @@ export class InventarioComponent implements OnInit {
     this.filterModelo.set('');
     this.filterResponsable.set('');
     this.currentPage.set(1);
+    this.cargarInventario();
   }
 
   downloadFilteredCsv() {
@@ -152,7 +180,12 @@ export class InventarioComponent implements OnInit {
   }
 
   updateFilter(type: 'tienda' | 'tipo' | 'estado' | 'serial' | 'placa' | 'fabricante' | 'modelo' | 'responsable', value: string) {
-    if (type === 'tienda') this.filterTienda.set(value);
+    if (type === 'tienda') {
+      this.filterTienda.set(this.parseStoreId(value));
+      this.currentPage.set(1);
+      this.cargarInventario();
+      return;
+    }
     if (type === 'tipo') this.filterTipo.set(value);
     if (type === 'estado') this.filterEstado.set(value);
     if (type === 'serial') this.filterSerial.set(value);
@@ -169,6 +202,114 @@ export class InventarioComponent implements OnInit {
       return `"${text.replace(/"/g, '""')}"`;
     }
     return text;
+  }
+
+  private parseStoreId(value: string): number | null {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return null;
+    }
+
+    return Math.trunc(parsed);
+  }
+
+  private getItemStoreId(item: InventarioModel): number | null {
+    const raw = item.tienda?.tienda_id ?? (item as any)?.tienda?.id ?? null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : null;
+  }
+
+  private getDefaultUserStoreId(): number | null {
+    return this.authService.getUserStoreId();
+  }
+
+  private aplicarTiendaUsuarioSiExiste(stores: TiendaModel[]): void {
+    const userStoreId = this.getDefaultUserStoreId();
+    if (userStoreId === null) {
+      return;
+    }
+
+    const storeExists = stores.some((store) => {
+      const normalizedStoreId = this.normalizeStoreId(
+        store.id ?? (store as any)?.tienda_id
+      );
+      return normalizedStoreId === userStoreId;
+    });
+    if (!storeExists) {
+      return;
+    }
+
+    if (this.filterTienda() === userStoreId) {
+      // Native select puede no reflejar el valor si se asigna antes de renderizar opciones.
+      this.filterTienda.set(null);
+      queueMicrotask(() => this.filterTienda.set(userStoreId));
+      return;
+    }
+
+    this.filterTienda.set(userStoreId);
+    this.currentPage.set(1);
+    this.cargarInventario();
+  }
+
+  getStoreOptionValue(store: TiendaModel): string {
+    const normalizedStoreId = this.normalizeStoreId(
+      store.id ?? (store as any)?.tienda_id
+    );
+    return normalizedStoreId === null ? '' : String(normalizedStoreId);
+  }
+
+  private normalizeStoreId(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return Math.trunc(value);
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value.trim());
+      if (Number.isFinite(parsed) && parsed > 0) {
+        return Math.trunc(parsed);
+      }
+    }
+    return null;
+  }
+
+  private normalizeStores(stores: TiendaModel[]): TiendaModel[] {
+    return (Array.isArray(stores) ? stores : [])
+      .map((store) => {
+        const id = this.normalizeStoreId(
+          store?.id ?? (store as any)?.tienda_id ?? (store as any)?.tiendaId
+        );
+        const nombre = typeof store?.nombre === 'string' ? store.nombre.trim() : '';
+        return id !== null && nombre
+          ? ({ id, nombre } as TiendaModel)
+          : null;
+      })
+      .filter((store): store is TiendaModel => store !== null);
+  }
+
+  private ensureUserStoreOption(items: InventarioModel[]): void {
+    const userStoreId = this.getDefaultUserStoreId();
+    if (userStoreId === null) {
+      return;
+    }
+
+    const alreadyExists = this.tiendas().some((store) => store.id === userStoreId);
+    if (alreadyExists) {
+      return;
+    }
+
+    const fromInventory = items.find((item) => this.getItemStoreId(item) === userStoreId);
+    const storeName = fromInventory?.tienda?.nombre?.trim();
+    if (!storeName) {
+      return;
+    }
+
+    const nextStores = [...this.tiendas(), { id: userStoreId, nombre: storeName }];
+    nextStores.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    this.tiendas.set(nextStores);
   }
 
   private getTimestamp(): string {

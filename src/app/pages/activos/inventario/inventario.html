@@ -3,10 +3,10 @@
     <div class="header-filters">
       <div class="filter-group">
         <span class="material-icons">store</span>
-        <select [value]="filterTienda()" (change)="updateFilter('tienda', $any($event.target).value)">
+        <select [value]="storeSelectValue()" (change)="updateFilter('tienda', $any($event.target).value)">
           <option value="">Todas las tiendas</option>
-          @for (tienda of tiendas(); track tienda) {
-          <option value="{{ tienda }}">{{ tienda }}</option>
+          @for (tienda of tiendas(); track getStoreOptionValue(tienda)) {
+          <option [value]="getStoreOptionValue(tienda)">{{ tienda.nombre }}</option>
           }
         </select>
       </div>

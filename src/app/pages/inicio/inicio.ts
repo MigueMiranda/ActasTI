@@ -30,6 +30,7 @@ import {
 
 import { TiendaEstadoService } from '../../core/services/tienda-estado.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { AuthService } from '../../core/services/auth.service';
 
 Chart.register(...registerables);
 
@@ -53,6 +54,8 @@ export class Inicio implements OnInit {
   private injector = inject(Injector);
   private tiendaEstadoService = inject(TiendaEstadoService);
   private notifications = inject(NotificationService);
+  private authService = inject(AuthService);
+  private readonly userStoreId = this.authService.getUserStoreId();
 
   readonly chartDirectives = viewChildren(BaseChartDirective);
   private dashboardErrorNotified = false;
@@ -229,6 +232,10 @@ export class Inicio implements OnInit {
   };
 
   ngOnInit() {
+    if (this.userStoreId !== null) {
+      this.tiendaSeleccionada.set(this.userStoreId);
+      this.tiendaEstadoService.cargarInventario(this.userStoreId);
+    }
     this.cargarTiendas();
     this.inicializarDashboard();
   }
@@ -237,6 +244,12 @@ export class Inicio implements OnInit {
     this.tiendaEstadoService.getTienda().subscribe({
       next: (data) => {
         this.tiendas.set(data);
+        if (this.userStoreId !== null) {
+          const exists = data.some((tienda) => tienda.id === this.userStoreId);
+          if (exists) {
+            this.tiendaSeleccionada.set(this.userStoreId);
+          }
+        }
       },
       error: (err) => {
         console.error("Error al cargar tiendas", err);
@@ -247,6 +260,7 @@ export class Inicio implements OnInit {
 
   onTiendaChange(id: number | null) {
     this.tiendaSeleccionada.set(id ?? null);
+    this.tiendaEstadoService.cargarInventario(id ?? null);
   }
 
   onEstadoChange(estados: string[] | null) {
@@ -258,9 +272,10 @@ export class Inicio implements OnInit {
   }
 
   limpiarFiltros() {
-    this.tiendaSeleccionada.set(null);
+    this.tiendaSeleccionada.set(this.userStoreId ?? null);
     this.estadosSeleccionados.set([]);
     this.tiposSeleccionados.set([]);
+    this.tiendaEstadoService.cargarInventario(this.tiendaSeleccionada());
   }
 
   private inicializarDashboard() {

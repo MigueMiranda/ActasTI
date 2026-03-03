@@ -7,6 +7,7 @@ import { map, shareReplay } from 'rxjs/operators';
 import { TiendaModel } from '../models/tienda-estado.model';
 import { InventarioModel } from '../models/inventario.model';
 import { InventarioService } from './inventario.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,17 +15,19 @@ import { InventarioService } from './inventario.service';
 export class TiendaEstadoService {
   private http = inject(HttpClient);
   private inventarioService = inject(InventarioService);
+  private authService = inject(AuthService);
   private apiUrl = environment.API_URL;
   private tiendasCache$?: Observable<TiendaModel[]>;
+  private readonly userStoreId = this.authService.getUserStoreId();
 
   public inventario = signal<InventarioModel[]>([]);
 
   constructor() {
-    this.cargarInventario();
+    this.cargarInventario(this.userStoreId);
   }
 
-  cargarInventario() {
-    this.inventarioService.getInventario()
+  cargarInventario(tiendaId: number | null = this.userStoreId) {
+    this.inventarioService.getInventario(false, tiendaId)
       .pipe(
         catchError((err) => {
           console.error('Error cargando inventario para filtros', err);

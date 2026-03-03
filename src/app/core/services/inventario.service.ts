@@ -16,25 +16,33 @@ interface InventarioEnvelope {
   providedIn: 'root',
 })
 export class InventarioService {
-
   private http = inject(HttpClient);
   private apiUrl = `${environment.API_URL}/elementos`;
-  private inventarioCache$?: Observable<InventarioModel[]>;
+  private inventarioCache = new Map<string, Observable<InventarioModel[]>>();
   private readonly defaultPageSize = 100;
   private readonly allItemsLimit = 50000;
   private readonly maxPaginationRequests = 400;
 
-  getInventario(forceRefresh = false): Observable<InventarioModel[]> {
-    if (forceRefresh || !this.inventarioCache$) {
-      const initial$ = this.fetchInventarioEnvelope();
+  getInventario(forceRefresh = false, tiendaId: number | null = null): Observable<InventarioModel[]> {
+    const normalizedStoreId = this.normalizeStoreId(tiendaId);
+    const cacheKey = this.getCacheKey(normalizedStoreId);
 
-      this.inventarioCache$ = initial$.pipe(
+    if (forceRefresh) {
+      this.inventarioCache.delete(cacheKey);
+    }
+
+    let cached = this.inventarioCache.get(cacheKey);
+    if (!cached) {
+      const baseParams = this.buildStoreParams(normalizedStoreId);
+      const initial$ = this.fetchInventarioEnvelope(baseParams);
+
+      cached = initial$.pipe(
         switchMap((initial) => {
           if (initial.items.length === 0) {
             return of([] as InventarioModel[]);
           }
 
-          const full$ = from(this.fetchFullInventory(initial)).pipe(
+          const full$ = from(this.fetchFullInventory(initial, baseParams)).pipe(
             catchError(() => of(initial.items))
           );
 
@@ -46,14 +54,16 @@ export class InventarioService {
         map((items) => this.mergeUniqueItems(items)),
         distinctUntilChanged((prev, curr) => prev.length === curr.length),
         catchError((err) => {
-          this.inventarioCache$ = undefined;
+          this.inventarioCache.delete(cacheKey);
           return throwError(() => err);
         }),
         shareReplay({ bufferSize: 1, refCount: false })
       );
+
+      this.inventarioCache.set(cacheKey, cached);
     }
 
-    return this.inventarioCache$;
+    return cached;
   }
 
   buscarPorCampo(valor: string, campo: 'serial' | 'placa'): Observable<InventarioModel> {
@@ -61,8 +71,14 @@ export class InventarioService {
     return this.http.get<InventarioModel>(`${this.apiUrl}/${campo}/${safeValue}`);
   }
 
-  invalidateCache(): void {
-    this.inventarioCache$ = undefined;
+  invalidateCache(tiendaId?: number | null): void {
+    if (typeof tiendaId === 'undefined') {
+      this.inventarioCache.clear();
+      return;
+    }
+
+    const cacheKey = this.getCacheKey(this.normalizeStoreId(tiendaId));
+    this.inventarioCache.delete(cacheKey);
   }
 
   private fetchInventarioEnvelope(params?: HttpParams): Observable<InventarioEnvelope> {
@@ -71,12 +87,12 @@ export class InventarioService {
     );
   }
 
-  private async fetchFullInventory(initial: InventarioEnvelope): Promise<InventarioModel[]> {
+  private async fetchFullInventory(initial: InventarioEnvelope, baseParams?: HttpParams): Promise<InventarioModel[]> {
     if (initial.total !== null && initial.total <= initial.items.length) {
       return initial.items;
     }
 
-    const boosted = await this.tryLargeLimit(initial);
+    const boosted = await this.tryLargeLimit(initial, baseParams);
     if (boosted.length > initial.items.length) {
       return boosted;
     }
@@ -89,10 +105,10 @@ export class InventarioService {
       return initial.items;
     }
 
-    return this.fetchByPagination(initial);
+    return this.fetchByPagination(initial, baseParams);
   }
 
-  private async tryLargeLimit(initial: InventarioEnvelope): Promise<InventarioModel[]> {
+  private async tryLargeLimit(initial: InventarioEnvelope, baseParams?: HttpParams): Promise<InventarioModel[]> {
     const requestedLimit = Math.max(initial.total ?? 0, this.allItemsLimit);
     const attempts = [
       new HttpParams().set('limit', String(requestedLimit)),
@@ -108,7 +124,7 @@ export class InventarioService {
 
     for (const params of attempts) {
       try {
-        const payload = await firstValueFrom(this.fetchInventarioEnvelope(params));
+        const payload = await firstValueFrom(this.fetchInventarioEnvelope(this.mergeParams(baseParams, params)));
         const items = this.mergeUniqueItems(payload.items);
         if (items.length > best.length) {
           best = items;
@@ -121,7 +137,7 @@ export class InventarioService {
     return best;
   }
 
-  private async fetchByPagination(initial: InventarioEnvelope): Promise<InventarioModel[]> {
+  private async fetchByPagination(initial: InventarioEnvelope, baseParams?: HttpParams): Promise<InventarioModel[]> {
     const base = this.mergeUniqueItems(initial.items);
     const pageSize = Math.max(
       initial.limit ?? base.length ?? this.defaultPageSize,
@@ -137,7 +153,7 @@ export class InventarioService {
     let requests = 0;
 
     while (requests < this.maxPaginationRequests) {
-      const next = await this.fetchPageWithFallback(pageSize, offset, page, seen);
+      const next = await this.fetchPageWithFallback(pageSize, offset, page, seen, baseParams);
       const nextItems = this.mergeUniqueItems(next.items);
 
       if (nextItems.length === 0) {
@@ -172,7 +188,8 @@ export class InventarioService {
     limit: number,
     offset: number,
     page: number,
-    seen: Map<string, InventarioModel>
+    seen: Map<string, InventarioModel>,
+    baseParams?: HttpParams
   ): Promise<InventarioEnvelope> {
     const attempts = [
       new HttpParams().set('limit', String(limit)).set('offset', String(offset)),
@@ -191,7 +208,7 @@ export class InventarioService {
 
     for (const params of attempts) {
       try {
-        const current = await firstValueFrom(this.fetchInventarioEnvelope(params));
+        const current = await firstValueFrom(this.fetchInventarioEnvelope(this.mergeParams(baseParams, params)));
         const currentItems = this.mergeUniqueItems(current.items);
         const newCount = currentItems.reduce((count, item) => {
           return seen.has(this.getItemKey(item)) ? count : count + 1;
@@ -294,5 +311,37 @@ export class InventarioService {
     const serial = (item.serial ?? '').trim();
     const placa = (item.placa ?? '').trim();
     return serial || placa || JSON.stringify(item);
+  }
+
+  private getCacheKey(tiendaId: number | null): string {
+    return tiendaId === null ? 'all' : `store:${tiendaId}`;
+  }
+
+  private normalizeStoreId(value: number | null): number | null {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+      return null;
+    }
+    return Math.trunc(value);
+  }
+
+  private buildStoreParams(tiendaId: number | null): HttpParams | undefined {
+    if (tiendaId === null) {
+      return undefined;
+    }
+
+    return new HttpParams()
+      .set('tiendaId', String(tiendaId))
+      .set('tienda_id', String(tiendaId));
+  }
+
+  private mergeParams(base: HttpParams | undefined, extras: HttpParams): HttpParams {
+    let params = base ?? new HttpParams();
+    for (const key of extras.keys()) {
+      const values = extras.getAll(key) ?? [];
+      values.forEach((value) => {
+        params = params.append(key, value);
+      });
+    }
+    return params;
   }
 }

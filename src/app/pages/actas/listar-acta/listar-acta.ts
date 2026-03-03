@@ -16,28 +16,66 @@ import { NotificationService } from '../../../core/services/notification.service
 export class ListarActa implements OnInit {
   private dialog = inject(MatDialog);
   private notifications = inject(NotificationService);
+  private tiendasPorId = new Map<number, string>();
   movimientos = signal<any[]>([]);
+  filtroTienda = signal('');
+  filtroSerial = signal('');
+  filtroResponsable = signal('');
   paginaActual = signal(1);
   itemsPorPagina = 10;
   reactivandoIds = signal<Set<number>>(new Set<number>());
 
-  // Lógica de ordenamiento y paginación reactiva
-  movimientosPaginados = computed(() => {
-    // 1. Ordenar de más reciente a antiguo (ID descendente)
-    const ordenados = [...this.movimientos()].sort((a, b) => b.id - a.id);
+  tiendasDisponibles = computed(() => {
+    const mapTiendas = new Map<string, string>();
 
-    // 2. Paginar
+    this.movimientos().forEach((mov) => {
+      const rawName = this.obtenerNombreTienda(mov);
+      const normalized = this.normalizarTexto(rawName);
+      if (!normalized) {
+        return;
+      }
+
+      if (!mapTiendas.has(normalized)) {
+        mapTiendas.set(normalized, rawName);
+      }
+    });
+
+    return Array.from(mapTiendas.values()).sort((a, b) => a.localeCompare(b, 'es'));
+  });
+
+  movimientosFiltrados = computed(() => {
+    const tienda = this.normalizarTexto(this.filtroTienda());
+    const serial = this.normalizarTexto(this.filtroSerial());
+    const responsable = this.normalizarTexto(this.filtroResponsable());
+
+    return this.movimientos().filter((mov) => {
+      const cumpleSerial = !serial || this.movimientoTieneSerial(mov, serial);
+      const cumpleResponsable = !responsable || this.movimientoTieneResponsable(mov, responsable);
+
+      // Busquedas de serial/responsable deben abarcar todos los movimientos.
+      if (serial || responsable) {
+        return cumpleSerial && cumpleResponsable;
+      }
+
+      const cumpleTienda = !tienda || this.normalizarTexto(this.obtenerNombreTienda(mov)).includes(tienda);
+      return cumpleTienda;
+    });
+  });
+
+  movimientosPaginados = computed(() => {
+    const ordenados = [...this.movimientosFiltrados()].sort((a, b) => b.id - a.id);
     const inicio = (this.paginaActual() - 1) * this.itemsPorPagina;
     const fin = inicio + this.itemsPorPagina;
     return ordenados.slice(inicio, fin);
   });
 
 
-  totalPaginas = computed(() => Math.ceil(this.movimientos().length / this.itemsPorPagina));
+  totalPaginas = computed(() => Math.max(1, Math.ceil(this.movimientosFiltrados().length / this.itemsPorPagina)));
 
   constructor(private actasService: ActasService) { }
 
   ngOnInit(): void {
+    this.cargarTiendas();
     this.cargarMovimientos();
   }
 
@@ -51,14 +89,51 @@ export class ListarActa implements OnInit {
     this.actasService.getMovimientos().subscribe({
       next: (data: any[]) => {
 
-        console.log('Movimientos: ', data)
+        console.log('Movimientos: ', data);
 
-        const formateado = data.map(grupo => ({
-          ...grupo[0],
-          elemento: grupo
-        }));
+        const formateado = data.map((entry) => {
+          const grupo = Array.isArray(entry) ? entry : [entry];
+          const base = grupo[0] ?? {};
+
+          return {
+            ...base,
+            elemento: grupo,
+            tiendaNombre: this.obtenerNombreTienda(base, grupo),
+          };
+        });
 
         this.movimientos.set(formateado);
+        this.paginaActual.set(1);
+      }
+    });
+  }
+
+  private cargarTiendas(): void {
+    this.actasService.getTiendas().subscribe({
+      next: (data) => {
+        this.tiendasPorId.clear();
+        (Array.isArray(data) ? data : []).forEach((tienda) => {
+          const id = this.normalizeNumber(
+            tienda?.id
+            ?? tienda?.tiendaId
+            ?? tienda?.tienda_id
+          );
+          const nombre = typeof tienda?.nombre === 'string' ? tienda.nombre.trim() : '';
+          if (id !== null && nombre) {
+            this.tiendasPorId.set(id, nombre);
+          }
+        });
+
+        if (this.movimientos().length > 0) {
+          const reconciliado = this.movimientos().map((mov) => ({
+            ...mov,
+            tiendaNombre: this.obtenerNombreTienda(mov, Array.isArray(mov?.elemento) ? mov.elemento : []),
+          }));
+          this.movimientos.set(reconciliado);
+        }
+      },
+      error: () => {
+        // Sin catalogo de tiendas se mantiene el fallback existente.
       }
     });
   }
@@ -68,6 +143,27 @@ export class ListarActa implements OnInit {
     if (p >= 1 && p <= this.totalPaginas()) {
       this.paginaActual.set(p);
     }
+  }
+
+  actualizarFiltro(tipo: 'tienda' | 'serial' | 'responsable', valor: string): void {
+    if (tipo === 'tienda') {
+      this.filtroTienda.set(valor);
+    }
+    if (tipo === 'serial') {
+      this.filtroSerial.set(valor);
+    }
+    if (tipo === 'responsable') {
+      this.filtroResponsable.set(valor);
+    }
+
+    this.paginaActual.set(1);
+  }
+
+  limpiarFiltros(): void {
+    this.filtroTienda.set('');
+    this.filtroSerial.set('');
+    this.filtroResponsable.set('');
+    this.paginaActual.set(1);
   }
 
   verActa(path: string, event?: MouseEvent) {
@@ -134,6 +230,155 @@ export class ListarActa implements OnInit {
       return null;
     }
     return candidate;
+  }
+
+  private normalizarTexto(value: unknown): string {
+    if (typeof value !== 'string') {
+      return '';
+    }
+    return value
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  private obtenerNombreTienda(mov: any, items: any[] = []): string {
+    const candidatos: unknown[] = [
+      mov?.tiendaNombre,
+      mov?.tienda?.nombre,
+      mov?.tienda_nombre,
+      mov?.nombreTienda,
+      mov?.asignacion?.tienda?.nombre,
+      mov?.asignacion?.tienda_nombre,
+      mov?.elemento?.tienda?.nombre,
+      mov?.elemento?.tienda_nombre,
+      mov?.elemento?.nombreTienda,
+      mov?.elemento?.tiendaNombre,
+    ];
+
+    items.forEach((item) => {
+      const nestedElemento = item?.elemento;
+      candidatos.push(
+        item?.tiendaNombre,
+        item?.tienda?.nombre,
+        item?.tienda_nombre,
+        item?.nombreTienda,
+        item?.asignacion?.tienda?.nombre,
+        item?.asignacion?.tienda_nombre,
+        nestedElemento?.tienda?.nombre,
+        nestedElemento?.tienda_nombre,
+        nestedElemento?.nombreTienda,
+        nestedElemento?.tiendaNombre
+      );
+    });
+
+    const encontrado = candidatos.find(
+      (valor) => typeof valor === 'string' && valor.trim().length > 0
+    ) as string | undefined;
+
+    if (encontrado) {
+      return encontrado.trim();
+    }
+
+    const tiendaId = this.obtenerTiendaId(mov, items);
+    if (tiendaId !== null) {
+      return this.tiendasPorId.get(tiendaId)?.trim() ?? '';
+    }
+
+    return '';
+  }
+
+  private obtenerTiendaId(mov: any, items: any[] = []): number | null {
+    const candidatos: unknown[] = [
+      mov?.tiendaId,
+      mov?.tienda_id,
+      mov?.tienda?.id,
+      mov?.tienda?.tienda_id,
+      mov?.asignacion?.tiendaId,
+      mov?.asignacion?.tienda_id,
+      mov?.asignacion?.tienda?.id,
+      mov?.asignacion?.tienda?.tienda_id,
+      mov?.elemento?.tiendaId,
+      mov?.elemento?.tienda_id,
+      mov?.elemento?.tienda?.id,
+      mov?.elemento?.tienda?.tienda_id,
+    ];
+
+    items.forEach((item) => {
+      const nestedElemento = item?.elemento;
+      candidatos.push(
+        item?.tiendaId,
+        item?.tienda_id,
+        item?.tienda?.id,
+        item?.tienda?.tienda_id,
+        item?.asignacion?.tiendaId,
+        item?.asignacion?.tienda_id,
+        nestedElemento?.tiendaId,
+        nestedElemento?.tienda_id,
+        nestedElemento?.tienda?.id,
+        nestedElemento?.tienda?.tienda_id
+      );
+    });
+
+    for (const candidato of candidatos) {
+      const normalized = this.normalizeNumber(candidato);
+      if (normalized !== null) {
+        return normalized;
+      }
+    }
+
+    return null;
+  }
+
+  private normalizeNumber(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = Number.parseInt(value, 10);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  }
+
+  private movimientoTieneSerial(mov: any, serialBusqueda: string): boolean {
+    const candidatos = new Set<string>();
+    const push = (value: unknown) => {
+      const normalized = this.normalizarTexto(value);
+      if (normalized) {
+        candidatos.add(normalized);
+      }
+    };
+
+    push(mov?.serial);
+    push(mov?.elemento?.serial);
+
+    const items = Array.isArray(mov?.elemento) ? mov.elemento : [];
+    items.forEach((item: any) => {
+      push(item?.serial);
+      push(item?.elemento?.serial);
+    });
+
+    for (const serial of candidatos) {
+      if (serial.includes(serialBusqueda)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private movimientoTieneResponsable(mov: any, responsableBusqueda: string): boolean {
+    const responsable = this.normalizarTexto(
+      mov?.users?.name
+      ?? mov?.usuario?.name
+      ?? mov?.responsable
+      ?? mov?.asignacion?.responsable
+      ?? ''
+    );
+
+    return responsable.includes(responsableBusqueda);
   }
 
   tieneActa(mov: any): boolean {

@@ -6,12 +6,16 @@ import { InventarioComponent } from './inventario';
 import { InventarioService } from '../../../core/services/inventario.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { InventarioModel } from '../../../core/models/inventario.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { TiendaEstadoService } from '../../../core/services/tienda-estado.service';
 
 describe('InventarioComponent', () => {
   let component: InventarioComponent;
   let fixture: ComponentFixture<InventarioComponent>;
   let inventarioServiceSpy: { getInventario: ReturnType<typeof vi.fn> };
   let notificationSpy: { error: ReturnType<typeof vi.fn> };
+  let authServiceSpy: { getUserStoreId: ReturnType<typeof vi.fn> };
+  let tiendaEstadoServiceSpy: { getTienda: ReturnType<typeof vi.fn> };
 
   const item: InventarioModel = {
     serial: 'S1',
@@ -34,6 +38,12 @@ describe('InventarioComponent', () => {
     notificationSpy = {
       error: vi.fn(),
     };
+    authServiceSpy = {
+      getUserStoreId: vi.fn().mockReturnValue(1),
+    };
+    tiendaEstadoServiceSpy = {
+      getTienda: vi.fn().mockReturnValue(of([{ id: 1, nombre: 'Tienda A' }])),
+    };
     inventarioServiceSpy.getInventario.mockReturnValue(of([item]));
 
     await TestBed.configureTestingModule({
@@ -41,6 +51,8 @@ describe('InventarioComponent', () => {
       providers: [
         { provide: InventarioService, useValue: inventarioServiceSpy },
         { provide: NotificationService, useValue: notificationSpy },
+        { provide: AuthService, useValue: authServiceSpy },
+        { provide: TiendaEstadoService, useValue: tiendaEstadoServiceSpy },
       ],
     }).compileComponents();
 
@@ -56,17 +68,19 @@ describe('InventarioComponent', () => {
   it('should load inventory on init', () => {
     expect(component.inventario().length).toBe(1);
     expect(component.isLoading()).toBe(false);
+    expect(component.filterTienda()).toBe(1);
+    expect(inventarioServiceSpy.getInventario).toHaveBeenCalledWith(false, 1);
   });
 
   it('should reset filters on cleanFilter', () => {
     component.filterEstado.set('Disponible');
-    component.filterTienda.set('Tienda A');
+    component.filterTienda.set(null);
     component.currentPage.set(3);
 
     component.cleanFilter();
 
     expect(component.filterEstado()).toBe('');
-    expect(component.filterTienda()).toBe('');
+    expect(component.filterTienda()).toBe(1);
     expect(component.currentPage()).toBe(1);
   });
 

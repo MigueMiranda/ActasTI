@@ -7,6 +7,7 @@ import { Inicio } from './inicio';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { TiendaEstadoService } from '../../core/services/tienda-estado.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { AuthService } from '../../core/services/auth.service';
 
 describe('Inicio', () => {
   let component: Inicio;
@@ -16,8 +17,10 @@ describe('Inicio', () => {
     estados: ReturnType<typeof signal<string[]>>;
     tipos: ReturnType<typeof signal<string[]>>;
     getTienda: ReturnType<typeof vi.fn>;
+    cargarInventario: ReturnType<typeof vi.fn>;
   };
   let notificationSpy: { error: ReturnType<typeof vi.fn> };
+  let authServiceSpy: { getUserStoreId: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     dashboardServiceSpy = {
@@ -34,8 +37,10 @@ describe('Inicio', () => {
       estados: signal<string[]>(['Disponible']),
       tipos: signal<string[]>(['Laptop']),
       getTienda: vi.fn().mockReturnValue(of([{ id: 1, nombre: 'Tienda A' }])),
+      cargarInventario: vi.fn(),
     };
     notificationSpy = { error: vi.fn() };
+    authServiceSpy = { getUserStoreId: vi.fn().mockReturnValue(1) };
 
     await TestBed.configureTestingModule({
       imports: [Inicio],
@@ -43,6 +48,7 @@ describe('Inicio', () => {
         { provide: DashboardService, useValue: dashboardServiceSpy },
         { provide: TiendaEstadoService, useValue: tiendaEstadoServiceMock },
         { provide: NotificationService, useValue: notificationSpy },
+        { provide: AuthService, useValue: authServiceSpy },
       ],
     }).compileComponents();
 
@@ -61,7 +67,7 @@ describe('Inicio', () => {
 
     component.limpiarFiltros();
 
-    expect(component.tiendaSeleccionada()).toBeNull();
+    expect(component.tiendaSeleccionada()).toBe(1);
     expect(component.estadosSeleccionados()).toEqual([]);
     expect(component.tiposSeleccionados()).toEqual([]);
   });

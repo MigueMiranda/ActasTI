@@ -10,6 +10,7 @@ import { TiendaEstadoService } from '../../../core/services/tienda-estado.servic
 import { ActasService } from '../../../core/services/actas.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { MatDialog } from '@angular/material/dialog';
+import { AuthService } from '../../../core/services/auth.service';
 
 describe('CrearActaComponent', () => {
   let component: CrearActaComponent;
@@ -28,6 +29,7 @@ describe('CrearActaComponent', () => {
     success: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
   };
+  let authServiceSpy: { getUserStoreId: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     dialogSpy = { open: vi.fn() };
@@ -37,6 +39,9 @@ describe('CrearActaComponent', () => {
     notificationSpy = {
       success: vi.fn(),
       error: vi.fn(),
+    };
+    authServiceSpy = {
+      getUserStoreId: vi.fn().mockReturnValue(1),
     };
 
     dialogSpy.open.mockReturnValue({
@@ -59,6 +64,7 @@ describe('CrearActaComponent', () => {
         { provide: MatDialog, useValue: dialogSpy },
         { provide: ActasService, useValue: actasServiceSpy },
         { provide: NotificationService, useValue: notificationSpy },
+        { provide: AuthService, useValue: authServiceSpy },
         { provide: UserService, useValue: userServiceSpy },
         { provide: InventarioService, useValue: inventarioServiceSpy },
         { provide: TiendaEstadoService, useValue: tiendaEstadoServiceMock },
