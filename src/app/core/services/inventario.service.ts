@@ -331,7 +331,10 @@ export class InventarioService {
 
     return new HttpParams()
       .set('tiendaId', String(tiendaId))
-      .set('tienda_id', String(tiendaId));
+      .set('tienda_id', String(tiendaId))
+      .set('idTienda', String(tiendaId))
+      .set('storeId', String(tiendaId))
+      .set('store_id', String(tiendaId));
   }
 
   private mergeParams(base: HttpParams | undefined, extras: HttpParams): HttpParams {

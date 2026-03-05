@@ -75,9 +75,8 @@ export class InventarioComponent implements OnInit {
 
   ngOnInit(): void {
     const userStoreId = this.getDefaultUserStoreId();
-    this.cargarTiendas();
     this.filterTienda.set(userStoreId);
-    console.log(this.filterTienda())
+    this.cargarTiendas();
     this.cargarInventario();
   }
 
@@ -96,8 +95,9 @@ export class InventarioComponent implements OnInit {
     ).subscribe({
       next: (data) => {
         const items = Array.isArray(data) ? data : [];
-        this.inventario.set(items);
-        this.ensureUserStoreOption(items);
+        const scopedItems = this.aplicarScopeTienda(items, selectedStoreId);
+        this.inventario.set(scopedItems);
+        this.ensureUserStoreOption(scopedItems);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -219,9 +219,24 @@ export class InventarioComponent implements OnInit {
   }
 
   private getItemStoreId(item: InventarioModel): number | null {
-    const raw = item.tienda?.tienda_id ?? (item as any)?.tienda?.id ?? null;
+    const raw =
+      item.tienda?.tienda_id
+      ?? (item as any)?.tienda?.id
+      ?? (item as any)?.tienda_id
+      ?? (item as any)?.tiendaId
+      ?? (item as any)?.store_id
+      ?? (item as any)?.storeId
+      ?? null;
     const parsed = Number(raw);
     return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : null;
+  }
+
+  private aplicarScopeTienda(items: InventarioModel[], tiendaId: number | null): InventarioModel[] {
+    if (tiendaId === null) {
+      return items;
+    }
+
+    return items.filter((item) => this.getItemStoreId(item) === tiendaId);
   }
 
   private getDefaultUserStoreId(): number | null {
@@ -245,9 +260,6 @@ export class InventarioComponent implements OnInit {
     }
 
     if (this.filterTienda() === userStoreId) {
-      // Native select puede no reflejar el valor si se asigna antes de renderizar opciones.
-      this.filterTienda.set(null);
-      queueMicrotask(() => this.filterTienda.set(userStoreId));
       return;
     }
 
