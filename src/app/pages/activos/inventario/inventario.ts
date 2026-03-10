@@ -75,8 +75,8 @@ export class InventarioComponent implements OnInit {
 
   ngOnInit(): void {
     const userStoreId = this.getDefaultUserStoreId();
-    this.filterTienda.set(userStoreId);
     this.cargarTiendas();
+    this.filterTienda.set(userStoreId);
     this.cargarInventario();
   }
 

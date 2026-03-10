@@ -82,6 +82,7 @@ export class InventarioService {
   }
 
   private fetchInventarioEnvelope(params?: HttpParams): Observable<InventarioEnvelope> {
+    console.debug('Fetching inventario with params:', params?.toString() ?? 'none');
     return this.http.get<unknown>(this.apiUrl, { params }).pipe(
       map((payload) => this.normalizeInventarioResponse(payload))
     );

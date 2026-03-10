@@ -186,6 +186,7 @@ export class AuthService {
   }
 
   private buildSession(response: AuthLoginResponse, fallbackUsername: string): AuthSession {
+    console.time('buildSession');
     const token = this.extractToken(response);
     if (!token) {
       throw new Error('Token no presente en respuesta de login');
@@ -198,6 +199,7 @@ export class AuthService {
     const tiendaId = this.extractStoreId(response, user);
     const now = Date.now();
 
+    console.timeEnd('buildSession');
     return {
       username,
       token,
