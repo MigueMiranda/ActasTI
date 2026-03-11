@@ -3,6 +3,17 @@
 
     <div class="header-filters">
         <div class="filter-group">
+            <span class="material-icons">store</span>
+            <select [value]="filtroTienda()"
+                (change)="actualizarFiltro('tienda', $any($event.target).value)">
+                <option value="">Todas las tiendas</option>
+                @for (tienda of tiendasDisponibles(); track tienda) {
+                    <option [value]="tienda">{{ tienda }}</option>
+                }
+            </select>
+        </div>
+
+        <div class="filter-group">
             <span class="material-icons">qr_code_2</span>
             <input type="text" placeholder="Buscar serial" [value]="filtroSerial()"
                 (input)="actualizarFiltro('serial', $any($event.target).value)">
