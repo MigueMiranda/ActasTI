@@ -42,6 +42,7 @@ export class ListarActa implements OnInit {
         mapTiendas.set(normalized, rawName);
       }
     });
+    console.log('mapTiendas: ', mapTiendas);
 
     return Array.from(mapTiendas.values()).sort((a, b) => a.localeCompare(b, 'es'));
   });
