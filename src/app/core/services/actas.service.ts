@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -27,8 +27,20 @@ export class ActasService {
     })
   }
 
-  getMovimientos() {
-    return this.http.get<any[]>(`${this.apiUrl}/movimientos`);
+  getMovimientos(tiendaId: number | null = null) {
+    let params = new HttpParams();
+
+    if (tiendaId !== null && Number.isFinite(tiendaId) && tiendaId > 0) {
+      const value = String(Math.trunc(tiendaId));
+      params = params
+        .set('tiendaId', value)
+        .set('tienda_id', value)
+        .set('idTienda', value)
+        .set('storeId', value)
+        .set('store_id', value);
+    }
+
+    return this.http.get<any[]>(`${this.apiUrl}/movimientos`, { params });
   }
 
   getTiendas(): Observable<any[]> {

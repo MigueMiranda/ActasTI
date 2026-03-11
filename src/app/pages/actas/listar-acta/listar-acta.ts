@@ -5,6 +5,7 @@ import { finalize } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { Dialog } from '../../../components/dialog/dialog';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-listar-acta',
@@ -16,6 +17,8 @@ import { NotificationService } from '../../../core/services/notification.service
 export class ListarActa implements OnInit {
   private dialog = inject(MatDialog);
   private notifications = inject(NotificationService);
+  private authService = inject(AuthService);
+  private readonly userStoreId = this.authService.getUserStoreId();
   private tiendasPorId = new Map<number, string>();
   movimientos = signal<any[]>([]);
   filtroTienda = signal('');
@@ -76,7 +79,7 @@ export class ListarActa implements OnInit {
 
   ngOnInit(): void {
     this.cargarTiendas();
-    this.cargarMovimientos();
+    this.cargarMovimientos(this.userStoreId);
   }
 
   expandedId: number | null = null;
@@ -85,8 +88,8 @@ export class ListarActa implements OnInit {
     this.expandedId = this.expandedId === id ? null : id;
   }
 
-  cargarMovimientos() {
-    this.actasService.getMovimientos().subscribe({
+  cargarMovimientos(tiendaId: number | null = null) {
+    this.actasService.getMovimientos(tiendaId).subscribe({
       next: (data: any[]) => {
 
         console.log('Movimientos: ', data);
