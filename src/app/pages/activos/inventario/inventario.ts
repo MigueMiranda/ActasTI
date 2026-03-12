@@ -76,14 +76,16 @@ export class InventarioComponent implements OnInit {
   ngOnInit(): void {
     const userStoreId = this.getDefaultUserStoreId();
     this.cargarTiendas();
-    this.filterTienda.set(userStoreId);
+    if (userStoreId !== null) {
+      this.filterTienda.set(userStoreId);
+    }
     this.cargarInventario();
   }
 
-  cargarInventario(): void {
+  cargarInventario(forceRefresh = false): void {
     const selectedStoreId = this.filterTienda();
     this.isLoading.set(true);
-    this.inventarioService.getInventario(false, selectedStoreId).pipe(
+    this.inventarioService.getInventario(forceRefresh, selectedStoreId).pipe(
       switchMap((data) => {
         if (data.length > 0) {
           return of(data);
@@ -182,8 +184,9 @@ export class InventarioComponent implements OnInit {
   updateFilter(type: 'tienda' | 'tipo' | 'estado' | 'serial' | 'placa' | 'fabricante' | 'modelo' | 'responsable', value: string) {
     if (type === 'tienda') {
       this.filterTienda.set(this.parseStoreId(value));
+      console.log('Tienda seleccionada: ', value);
       this.currentPage.set(1);
-      this.cargarInventario();
+      this.cargarInventario(true);
       return;
     }
     if (type === 'tipo') this.filterTipo.set(value);
@@ -251,7 +254,11 @@ export class InventarioComponent implements OnInit {
 
     const storeExists = stores.some((store) => {
       const normalizedStoreId = this.normalizeStoreId(
-        store.id ?? (store as any)?.tienda_id
+        store.id
+        ?? (store as any)?.tienda_id
+        ?? (store as any)?.tiendaId
+        ?? (store as any)?.store_id
+        ?? (store as any)?.storeId
       );
       return normalizedStoreId === userStoreId;
     });
@@ -270,7 +277,11 @@ export class InventarioComponent implements OnInit {
 
   getStoreOptionValue(store: TiendaModel): string {
     const normalizedStoreId = this.normalizeStoreId(
-      store.id ?? (store as any)?.tienda_id
+      store.id
+      ?? (store as any)?.tienda_id
+      ?? (store as any)?.tiendaId
+      ?? (store as any)?.store_id
+      ?? (store as any)?.storeId
     );
     return normalizedStoreId === null ? '' : String(normalizedStoreId);
   }
@@ -292,7 +303,11 @@ export class InventarioComponent implements OnInit {
     return (Array.isArray(stores) ? stores : [])
       .map((store) => {
         const id = this.normalizeStoreId(
-          store?.id ?? (store as any)?.tienda_id ?? (store as any)?.tiendaId
+          store?.id
+          ?? (store as any)?.tienda_id
+          ?? (store as any)?.tiendaId
+          ?? (store as any)?.store_id
+          ?? (store as any)?.storeId
         );
         const nombre = typeof store?.nombre === 'string' ? store.nombre.trim() : '';
         return id !== null && nombre

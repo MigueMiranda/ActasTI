@@ -58,10 +58,16 @@
             <mat-form-field appearance="outline">
               <mat-label>Serial</mat-label>
               <input matInput formControlName="serial" />
+              @if (campoActivoDuplicado() === 'serial') {
+              <mat-error>{{ errorActivoDuplicado() }}</mat-error>
+              }
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Placa</mat-label>
               <input matInput formControlName="placa" />
+              @if (campoActivoDuplicado() === 'placa') {
+              <mat-error>{{ errorActivoDuplicado() }}</mat-error>
+              }
             </mat-form-field>
           </div>
 

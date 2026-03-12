@@ -327,7 +327,8 @@ export class InventarioService {
 
   private buildStoreParams(tiendaId: number | null): HttpParams | undefined {
     if (tiendaId === null) {
-      return undefined;
+      // Solicitar inventario global (evita que el backend use el store del token por defecto)
+      return new HttpParams().set('all', 'true');
     }
 
     return new HttpParams()

@@ -52,6 +52,8 @@ export class CrearActaComponent implements OnInit, OnDestroy {
   tiendas = signal<any[]>([]);
   estados = this.tiendaEstadoService.estados;
   datosTecnicosActivo = signal<DatosTecnicosFormValue>(this.buildEmptyDatosTecnicos());
+  errorActivoDuplicado = signal('');
+  campoActivoDuplicado = signal<'serial' | 'placa' | null>(null);
   private destroy$ = new Subject<void>();
   private readonly draftKey = 'acta_borrador';
 
@@ -171,6 +173,7 @@ export class CrearActaComponent implements OnInit, OnDestroy {
 
     control.valueChanges
       .pipe(
+        tap(() => this.limpiarErroresDuplicado()),
         filter((val): val is string => typeof val === 'string' && val.length > 3),
         debounceTime(400),
         distinctUntilChanged(),
@@ -236,6 +239,26 @@ export class CrearActaComponent implements OnInit, OnDestroy {
 
   guardarActivoYContinuar() {
     if (this.activosForm.invalid) return;
+
+    this.limpiarErroresDuplicado();
+    const serial = this.readString(this.activosForm.get('serial')?.value) ?? '';
+    const placa = this.readString(this.activosForm.get('placa')?.value) ?? '';
+    const duplicado = this.buscarDuplicado(serial, placa);
+
+    if (duplicado) {
+      const mensaje = duplicado === 'serial'
+        ? `El serial "${serial}" ya está guardado en el borrador. Ingresa otro.`
+        : `La placa "${placa}" ya está guardada en el borrador. Ingresa otra.`;
+
+      this.errorActivoDuplicado.set(mensaje);
+      this.campoActivoDuplicado.set(duplicado);
+      this.marcarDuplicadoEnFormulario(duplicado);
+      this.notifications.error(mensaje);
+      return;
+    }
+
+    this.errorActivoDuplicado.set('');
+    this.campoActivoDuplicado.set(null);
 
     // Usamos update en el signal
     this.activosAgregados.update(prev => [...prev, this.construirActivoConDatosTecnicos()]);
@@ -470,5 +493,64 @@ export class CrearActaComponent implements OnInit, OnDestroy {
         return typeof serial === 'string' ? serial.trim() : '';
       })
       .filter((serial) => serial.length > 0);
+  }
+
+  private obtenerActivosDelBorrador(): any[] {
+    const data = localStorage.getItem(this.draftKey);
+    if (!data) return [];
+
+    try {
+      const borrador = JSON.parse(data);
+      if (borrador && typeof borrador === 'object' && Array.isArray(borrador['activos'])) {
+        return borrador['activos'];
+      }
+    } catch {
+      return [];
+    }
+    return [];
+  }
+
+  private buscarDuplicado(serial: string, placa: string): 'serial' | 'placa' | null {
+    const serialNorm = serial.trim().toLowerCase();
+    const placaNorm = placa.trim().toLowerCase();
+
+    const existentes = [...this.activosAgregados(), ...this.obtenerActivosDelBorrador()];
+
+    for (const item of existentes) {
+      if (!item || typeof item !== 'object') continue;
+
+      const itemSerial = this.readString((item as Record<string, unknown>)['serial'])?.trim().toLowerCase();
+      const itemPlaca = this.readString((item as Record<string, unknown>)['placa'])?.trim().toLowerCase();
+
+      if (serialNorm && itemSerial && serialNorm === itemSerial) {
+        return 'serial';
+      }
+      if (placaNorm && itemPlaca && placaNorm === itemPlaca) {
+        return 'placa';
+      }
+    }
+
+    return null;
+  }
+
+  private marcarDuplicadoEnFormulario(campo: 'serial' | 'placa'): void {
+    const control = this.activosForm.get(campo);
+    if (!control) return;
+
+    const currentErrors = control.errors ?? {};
+    control.setErrors({ ...currentErrors, duplicado: true });
+    control.markAsTouched();
+  }
+
+  private limpiarErroresDuplicado(): void {
+    ['serial', 'placa'].forEach((campo) => {
+      const control = this.activosForm.get(campo);
+      if (!control?.errors) return;
+
+      const { duplicado, ...rest } = control.errors;
+      if (duplicado) {
+        control.setErrors(Object.keys(rest).length ? rest : null);
+      }
+    });
   }
 }

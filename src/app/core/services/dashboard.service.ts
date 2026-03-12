@@ -63,6 +63,8 @@ export class DashboardService {
 
     if (sanitizedFilter.tiendaId !== null) {
       params = params.set('tiendaId', sanitizedFilter.tiendaId.toString());
+    } else {
+      params = params.set('all', 'true');
     }
 
     params = this.appendArrayParams(params, sanitizedFilter.estados, 'estados', 'estado');
