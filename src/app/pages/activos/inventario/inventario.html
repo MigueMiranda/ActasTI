@@ -62,6 +62,15 @@
       <p>Total: <strong>{{ inventario().length }}</strong> | Filtrado: <strong>{{ inventarioFiltrado().length
           }}</strong></p>
     </div>
+    @if (isLoading()) {
+    <div class="loading-banner" aria-live="polite">
+      <span class="material-icons">autorenew</span>
+      <div>
+        <div class="loading-title">Cargando inventario</div>
+        <small>Estamos preparando los datos y filtros.</small>
+      </div>
+    </div>
+    }
 
     <table class="tabla">
       <thead>
@@ -80,9 +89,19 @@
 
       <tbody>
         @if (isLoading()) {
-        <tr>
-          <td colspan="9">Cargando...</td>
+        @for (_ of skeletonRows; track $index) {
+        <tr class="skeleton-row">
+          <td><span class="skeleton-line w-65" aria-hidden="true"></span></td>
+          <td><span class="skeleton-line w-50" aria-hidden="true"></span></td>
+          <td><span class="skeleton-line w-40" aria-hidden="true"></span></td>
+          <td><span class="skeleton-line w-55" aria-hidden="true"></span></td>
+          <td><span class="skeleton-line w-60" aria-hidden="true"></span></td>
+          <td><span class="skeleton-line w-50" aria-hidden="true"></span></td>
+          <td><span class="skeleton-line w-70" aria-hidden="true"></span></td>
+          <td><span class="skeleton-line w-60" aria-hidden="true"></span></td>
+          <td><span class="skeleton-pill" aria-hidden="true"></span></td>
         </tr>
+        }
         } @else {
         @for (item of paginatedData(); track item.serial) {
         <tr>

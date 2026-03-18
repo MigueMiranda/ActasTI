@@ -108,6 +108,9 @@ export class ListarActa implements OnInit {
 
         this.movimientos.set(formateado);
         this.paginaActual.set(1);
+
+        // Si el usuario tiene tienda en el token, preseleccionamos el filtro visual
+        this.sincronizarFiltroTiendaInicial();
       }
     });
   }
@@ -127,6 +130,8 @@ export class ListarActa implements OnInit {
             this.tiendasPorId.set(id, nombre);
           }
         });
+
+        this.sincronizarFiltroTiendaInicial();
 
         if (this.movimientos().length > 0) {
           const reconciliado = this.movimientos().map((mov) => ({
@@ -234,6 +239,22 @@ export class ListarActa implements OnInit {
       return null;
     }
     return candidate;
+  }
+
+  private sincronizarFiltroTiendaInicial(): void {
+    if (this.filtroTienda()) {
+      return;
+    }
+
+    const storeId = this.normalizeNumber(this.userStoreId);
+    if (storeId === null) {
+      return;
+    }
+
+    const nombre = this.tiendasPorId.get(storeId);
+    if (nombre) {
+      this.filtroTienda.set(nombre);
+    }
   }
 
   private normalizarTexto(value: unknown): string {

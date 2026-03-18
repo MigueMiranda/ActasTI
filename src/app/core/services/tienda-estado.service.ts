@@ -18,7 +18,7 @@ export class TiendaEstadoService {
   private authService = inject(AuthService);
   private apiUrl = environment.API_URL;
   private tiendasCache$?: Observable<TiendaModel[]>;
-  private readonly userStoreId = this.authService.getUserStoreId();
+  private readonly userStoreId = this.normalizeStoreId(this.authService.getUserStoreId());
 
   public inventario = signal<InventarioModel[]>([]);
 
@@ -113,5 +113,18 @@ export class TiendaEstadoService {
     const serial = typeof item.serial === 'string' ? item.serial.trim() : '';
     const placa = typeof item.placa === 'string' ? item.placa.trim() : '';
     return serial || placa || JSON.stringify(item);
+  }
+
+  private normalizeStoreId(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return Math.trunc(value);
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value.trim());
+      if (Number.isFinite(parsed) && parsed > 0) {
+        return Math.trunc(parsed);
+      }
+    }
+    return null;
   }
 }

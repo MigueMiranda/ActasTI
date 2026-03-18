@@ -120,4 +120,31 @@ describe('ListarActa', () => {
     expect(actasServiceSpy.reactivarAsignacion).toHaveBeenCalledWith(77);
     expect(notificationSpy.success).toHaveBeenCalled();
   });
+
+  it('should download and open acta in new window', () => {
+    const blob = new Blob(['pdf'], { type: 'application/pdf' });
+    actasServiceSpy.getActaPdf.mockReturnValue(of(blob));
+
+    const stopPropagation = vi.fn();
+    const popupMock = {
+      document: { title: '', body: { textContent: '' } },
+      location: { href: '' },
+    } as any;
+
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(popupMock);
+    const createUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+    component.verActa('carpeta/acta-123.pdf', { stopPropagation } as any as MouseEvent);
+
+    expect(stopPropagation).toHaveBeenCalled();
+    expect(actasServiceSpy.getActaPdf).toHaveBeenCalledWith('acta-123.pdf');
+    expect(openSpy).toHaveBeenCalledWith('', '_blank');
+    expect(popupMock.document.body.textContent).toBe('Cargando acta...');
+    expect(popupMock.location.href).toBe('blob:mock-url');
+
+    openSpy.mockRestore();
+    createUrlSpy.mockRestore();
+    revokeSpy.mockRestore();
+  });
 });

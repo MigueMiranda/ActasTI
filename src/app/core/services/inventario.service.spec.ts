@@ -51,7 +51,7 @@ describe('InventarioService', () => {
     service.getInventario().subscribe((data) => { first = data; });
     service.getInventario().subscribe((data) => { second = data; });
 
-    const req = httpMock.expectOne(`${environment.API_URL}/elementos`);
+    const req = httpMock.expectOne(`${environment.API_URL}/elementos?all=true`);
     expect(req.request.method).toBe('GET');
     req.flush({ data: [mockItem], total: 1, limit: 100 });
 
@@ -61,12 +61,12 @@ describe('InventarioService', () => {
 
   it('should invalidate cache and fetch again', () => {
     service.getInventario().subscribe();
-    httpMock.expectOne(`${environment.API_URL}/elementos`).flush({ data: [], total: 0, limit: 100 });
+    httpMock.expectOne(`${environment.API_URL}/elementos?all=true`).flush({ data: [], total: 0, limit: 100 });
 
     service.invalidateCache();
 
     service.getInventario().subscribe();
-    const req = httpMock.expectOne(`${environment.API_URL}/elementos`);
+    const req = httpMock.expectOne(`${environment.API_URL}/elementos?all=true`);
     expect(req.request.method).toBe('GET');
     req.flush({ data: [], total: 0, limit: 100 });
   });

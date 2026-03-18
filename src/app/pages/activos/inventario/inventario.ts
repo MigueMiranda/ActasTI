@@ -19,12 +19,13 @@ export class InventarioComponent implements OnInit {
   private notifications = inject(NotificationService);
   private authService = inject(AuthService);
   private tiendaEstadoService = inject(TiendaEstadoService);
+  private readonly userStoreId = this.normalizeStoreId(this.authService.getUserStoreId());
   inventario = signal<InventarioModel[]>([]);
   searchTerm = signal('');
   isLoading = signal(true);
 
   tiendas = signal<TiendaModel[]>([]);
-  filterTienda = signal<number | null>(null);
+  filterTienda = signal<number | null>(this.userStoreId);
   filterTipo = signal('');
   filterEstado = signal('');
   filterSerial = signal('');
@@ -35,6 +36,7 @@ export class InventarioComponent implements OnInit {
 
   currentPage = signal(1);
   pageSize = signal(10);
+  skeletonRows = Array.from({ length: 8 });
   storeSelectValue = computed(() => {
     const storeId = this.filterTienda();
     return storeId === null ? '' : String(storeId);
@@ -74,11 +76,7 @@ export class InventarioComponent implements OnInit {
   constructor(private inventarioService: InventarioService) { }
 
   ngOnInit(): void {
-    const userStoreId = this.getDefaultUserStoreId();
     this.cargarTiendas();
-    if (userStoreId !== null) {
-      this.filterTienda.set(userStoreId);
-    }
     this.cargarInventario();
   }
 
@@ -135,7 +133,7 @@ export class InventarioComponent implements OnInit {
   }
 
   cleanFilter() {
-    this.filterTienda.set(this.getDefaultUserStoreId());
+    this.filterTienda.set(this.userStoreId);
     this.filterTipo.set('');
     this.filterEstado.set('');
     this.filterSerial.set('');
@@ -242,13 +240,8 @@ export class InventarioComponent implements OnInit {
     return items.filter((item) => this.getItemStoreId(item) === tiendaId);
   }
 
-  private getDefaultUserStoreId(): number | null {
-    return this.authService.getUserStoreId();
-  }
-
   private aplicarTiendaUsuarioSiExiste(stores: TiendaModel[]): void {
-    const userStoreId = this.getDefaultUserStoreId();
-    if (userStoreId === null) {
+    if (this.userStoreId === null) {
       return;
     }
 
@@ -260,17 +253,17 @@ export class InventarioComponent implements OnInit {
         ?? (store as any)?.store_id
         ?? (store as any)?.storeId
       );
-      return normalizedStoreId === userStoreId;
+      return normalizedStoreId === this.userStoreId;
     });
     if (!storeExists) {
       return;
     }
 
-    if (this.filterTienda() === userStoreId) {
+    if (this.filterTienda() === this.userStoreId) {
       return;
     }
 
-    this.filterTienda.set(userStoreId);
+    this.filterTienda.set(this.userStoreId);
     this.currentPage.set(1);
     this.cargarInventario();
   }
@@ -318,23 +311,22 @@ export class InventarioComponent implements OnInit {
   }
 
   private ensureUserStoreOption(items: InventarioModel[]): void {
-    const userStoreId = this.getDefaultUserStoreId();
-    if (userStoreId === null) {
+    if (this.userStoreId === null) {
       return;
     }
 
-    const alreadyExists = this.tiendas().some((store) => store.id === userStoreId);
+    const alreadyExists = this.tiendas().some((store) => store.id === this.userStoreId);
     if (alreadyExists) {
       return;
     }
 
-    const fromInventory = items.find((item) => this.getItemStoreId(item) === userStoreId);
+    const fromInventory = items.find((item) => this.getItemStoreId(item) === this.userStoreId);
     const storeName = fromInventory?.tienda?.nombre?.trim();
     if (!storeName) {
       return;
     }
 
-    const nextStores = [...this.tiendas(), { id: userStoreId, nombre: storeName }];
+    const nextStores = [...this.tiendas(), { id: this.userStoreId, nombre: storeName }];
     nextStores.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
     this.tiendas.set(nextStores);
   }

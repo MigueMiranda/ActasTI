@@ -315,6 +315,98 @@ $text-muted: #666;
   }
 }
 
+.inventory-page .loading-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 6px;
+  padding: 10px 14px;
+  background: #e0f2fe;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  color: #0f172a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+
+  .material-icons {
+    font-size: 20px;
+    color: #075985;
+    animation: inventory-spin 1s linear infinite;
+  }
+
+  .loading-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  small {
+    display: block;
+    color: #475569;
+  }
+}
+
+app-inventario {
+  .skeleton-row td {
+    padding: 14px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .skeleton-line,
+  .skeleton-pill {
+    display: block;
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #e2e8f0 20%, #f8fafc 50%, #e2e8f0 80%);
+    background-size: 220% 100%;
+    animation: inventory-shimmer 1.25s ease-in-out infinite;
+  }
+
+  .skeleton-pill {
+    height: 18px;
+    width: 64px;
+  }
+
+  .w-40 {
+    width: 40%;
+  }
+
+  .w-50 {
+    width: 50%;
+  }
+
+  .w-55 {
+    width: 55%;
+  }
+
+  .w-60 {
+    width: 60%;
+  }
+
+  .w-65 {
+    width: 65%;
+  }
+
+  .w-70 {
+    width: 70%;
+  }
+}
+
+@keyframes inventory-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes inventory-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .mat-mdc-snack-bar-container.toast-success .mdc-snackbar__surface {
   background: #15803d !important;
   color: #fff !important;
