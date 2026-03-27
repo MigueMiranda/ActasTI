@@ -24,10 +24,32 @@
         <span class="text">Inicio</span>
       </a>
 
-      <a routerLink="/inventario" routerLinkActive="active">
-        <span class="material-icons">inventory_2</span>
-        <span class="text">Inventario</span>
-      </a>
+      <div class="nav-group" [class.open]="inventoryMenuOpen" [class.active-group]="isInventorySectionActive()">
+        <button
+          type="button"
+          class="nav-trigger"
+          [class.active]="isInventorySectionActive()"
+          [attr.aria-expanded]="inventoryMenuOpen"
+          (click)="toggleInventoryMenu()">
+          <span class="nav-main">
+            <span class="material-icons">inventory_2</span>
+            <span class="text">Inventario</span>
+          </span>
+          <span class="material-icons chevron">{{ inventoryMenuOpen ? 'expand_less' : 'expand_more' }}</span>
+        </button>
+
+        <div class="submenu" [class.visible]="inventoryMenuOpen">
+          <a routerLink="/inventario" routerLinkActive="active">
+            <span class="material-icons">visibility</span>
+            <span class="text">Ver inventario</span>
+          </a>
+
+          <a routerLink="/cargue-elementos" routerLinkActive="active">
+            <span class="material-icons">upload_file</span>
+            <span class="text">Cargar inventario</span>
+          </a>
+        </div>
+      </div>
 
       <a routerLink="/crear-acta" routerLinkActive="active">
         <span class="material-icons">description</span>

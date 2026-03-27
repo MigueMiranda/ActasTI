@@ -3,6 +3,7 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { Login } from './pages/login/login';
 import { Layout } from './components/layout/layout';
 import { Aprobar } from './pages/actas/aprobar/aprobar';
+import { CargueElementosComponent } from './pages/activos/cargue-elementos/cargue-elementos';
 
 describe('App Routes', () => {
   it('should define login route as default', () => {
@@ -16,6 +17,10 @@ describe('App Routes', () => {
     expect(layoutRoute?.canActivateChild).toEqual([AuthGuard]);
     expect(layoutRoute?.children?.some((child) => child.path === 'inicio')).toBe(true);
     expect(layoutRoute?.children?.some((child) => child.path === 'inventario')).toBe(true);
+    expect(layoutRoute?.children?.some((child) => child.path === 'cargue-elementos')).toBe(true);
+    expect(
+      layoutRoute?.children?.find((child) => child.path === 'cargue-elementos')?.component
+    ).toBe(CargueElementosComponent);
   });
 
   it('should expose public aprobar route', () => {

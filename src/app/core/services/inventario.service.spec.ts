@@ -90,4 +90,50 @@ describe('InventarioService', () => {
     expect(req.request.method).toBe('GET');
     req.flush({ data: [mockItem], total: 1, limit: 100 });
   });
+
+  it('should post individual payload to carga endpoint', () => {
+    const payload = {
+      serial: 'NEW-01',
+      placa: 'PL-01',
+      tipo: 'CPU',
+      ubicacion: 'Cuarto de TI',
+      fabricante: 'HP',
+      modelo: 'Pro SFF 400',
+      estado: 'Disponible',
+      tienda_id: 41,
+    };
+
+    service.cargarElemento(payload).subscribe();
+
+    const req = httpMock.expectOne(`${environment.API_URL}/elementos/carga`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
+    req.flush({
+      ok: true,
+      mode: 'single',
+      dryRun: false,
+      processedRows: 1,
+      summary: { inserted: 1, updated: 0 },
+      issues: { warnings: [], errors: [] },
+    });
+  });
+
+  it('should upload csv file using multipart form data', () => {
+    const file = new File(['serial,placa\nA1,P1'], 'elementos.csv', { type: 'text/csv' });
+
+    service.cargarArchivoCsv(file).subscribe();
+
+    const req = httpMock.expectOne(`${environment.API_URL}/elementos/carga`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    expect((req.request.body as FormData).get('file')).toBe(file);
+    req.flush({
+      ok: true,
+      mode: 'massive',
+      dryRun: false,
+      processedRows: 1,
+      summary: { inserted: 1, updated: 0 },
+      issues: { warnings: [], errors: [] },
+    });
+  });
 });

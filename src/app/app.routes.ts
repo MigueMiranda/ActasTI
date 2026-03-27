@@ -4,6 +4,7 @@ import { Inicio } from './pages/inicio/inicio';
 import { CrearActaComponent } from './pages/actas/crear-acta/crear-acta';
 import { ListarActa } from './pages/actas/listar-acta/listar-acta';
 import { InventarioComponent } from './pages/activos/inventario/inventario';
+import { CargueElementosComponent } from './pages/activos/cargue-elementos/cargue-elementos';
 import { Layout } from './components/layout/layout';
 import { Aprobar } from './pages/actas/aprobar/aprobar';
 import { AuthGuard } from './core/guards/auth.guard';
@@ -20,6 +21,7 @@ export const routes: Routes = [
             { path: 'crear-acta', component: CrearActaComponent },
             { path: 'listar-acta', component: ListarActa },
             { path: 'inventario', component: InventarioComponent },
+            { path: 'cargue-elementos', component: CargueElementosComponent },
         ]
     },
     { path: 'aprobar', component: Aprobar },

@@ -51,6 +51,21 @@ describe('Layout', () => {
     expect(component.sidebarCollapsed).toBe(false);
   });
 
+  it('should open inventory submenu without expanding a collapsed sidebar', () => {
+    expect(component.inventoryMenuOpen).toBe(false);
+    expect(component.sidebarCollapsed).toBe(true);
+
+    component.toggleInventoryMenu();
+
+    expect(component.inventoryMenuOpen).toBe(true);
+    expect(component.sidebarCollapsed).toBe(true);
+  });
+
+  it('should detect inventory section routes', () => {
+    Object.defineProperty(router, 'url', { value: '/cargue-elementos', configurable: true });
+    expect(component.isInventorySectionActive()).toBe(true);
+  });
+
   it('should clear storage and navigate on logout', async () => {
     localStorage.setItem('acta_borrador', '1');
     component.logout();

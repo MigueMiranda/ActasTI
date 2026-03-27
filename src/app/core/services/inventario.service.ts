@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from './../../../environments/environment';
 import { Observable, concat, firstValueFrom, from, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, map, shareReplay, switchMap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 
 import { InventarioModel } from '../models/inventario.model';
 
@@ -10,6 +10,55 @@ interface InventarioEnvelope {
   items: InventarioModel[];
   total: number | null;
   limit: number | null;
+}
+
+export interface ElementoCargaPayload {
+  serial: string;
+  placa: string;
+  tipo: string;
+  ubicacion: string;
+  fabricante: string;
+  modelo: string;
+  estado: string;
+  adendo?: string;
+  fechaActualizacion?: string;
+  fechaAsignacion?: string;
+  responsable?: string;
+  memoria?: string;
+  disco?: string;
+  ipCableada?: string;
+  macCableada?: string;
+  ipInalambrica?: string;
+  macInalambrica?: string;
+  ip_cableada?: string;
+  mac_cableada?: string;
+  ip_inalambrica?: string;
+  mac_inalambrica?: string;
+  teclado?: string;
+  mouse?: string;
+  mause?: string;
+  propietario?: string;
+  hostname?: string;
+  observacion?: string;
+  user_id?: number;
+  tienda_id?: number;
+}
+
+export interface ElementosCargaResponse {
+  ok: boolean;
+  mode: 'single' | 'massive';
+  dryRun: boolean;
+  processedRows: number;
+  summary: {
+    inserted: number;
+    updated: number;
+    [key: string]: number | undefined;
+  };
+  issues: {
+    warnings: string[];
+    errors: string[];
+  };
+  data?: unknown;
 }
 
 @Injectable({
@@ -69,6 +118,25 @@ export class InventarioService {
   buscarPorCampo(valor: string, campo: 'serial' | 'placa'): Observable<InventarioModel> {
     const safeValue = encodeURIComponent(valor.trim());
     return this.http.get<InventarioModel>(`${this.apiUrl}/${campo}/${safeValue}`);
+  }
+
+  cargarElemento(payload: ElementoCargaPayload): Observable<ElementosCargaResponse> {
+    return this.http.post<ElementosCargaResponse>(`${this.apiUrl}/carga`, payload).pipe(
+      tap(() => this.invalidateCache())
+    );
+  }
+
+  cargarArchivoCsv(file: File, dryRun = false): Observable<ElementosCargaResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    if (dryRun) {
+      formData.append('dryRun', 'true');
+    }
+
+    return this.http.post<ElementosCargaResponse>(`${this.apiUrl}/carga`, formData).pipe(
+      tap(() => this.invalidateCache())
+    );
   }
 
   invalidateCache(tiendaId?: number | null): void {
