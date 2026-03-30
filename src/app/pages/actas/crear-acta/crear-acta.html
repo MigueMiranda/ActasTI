@@ -1,4 +1,13 @@
 <mat-card class="acta-card">
+  <div class="acta-header">
+    <div>
+      <h1>Crear Acta</h1>
+    </div>
+    <button mat-stroked-button type="button" (click)="cancelarActa()">
+      Reiniciar formulario
+    </button>
+  </div>
+
   <mat-horizontal-stepper linear #stepper>
 
     <mat-step [stepControl]="responsableForm">
@@ -179,7 +188,7 @@
         <button mat-stroked-button (click)="agregarElemento()">+ Añadir otro</button>
         <div class="spacer"></div>
         <button mat-button matStepperPrevious>Volver</button>
-        <button mat-raised-button color="accent" (click)="cancelarActa()">Cancelar Acta</button>
+        <button mat-raised-button color="accent" (click)="cancelarActa()">Cancelar y limpiar</button>
         <button mat-raised-button color="primary" (click)="confirmarGenerarActa()">Confirmar Acta</button>
       </div>
     </mat-step>

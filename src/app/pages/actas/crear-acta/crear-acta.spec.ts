@@ -32,6 +32,8 @@ describe('CrearActaComponent', () => {
   let authServiceSpy: { getUserStoreId: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    localStorage.clear();
+
     dialogSpy = { open: vi.fn() };
     actasServiceSpy = { notificarActa: vi.fn() };
     userServiceSpy = { getByUsername: vi.fn() };
@@ -155,5 +157,60 @@ describe('CrearActaComponent', () => {
     expect(actasServiceSpy.notificarActa).toHaveBeenCalled();
     expect(tiendaEstadoServiceMock.refrescarActivosPorSerial).toHaveBeenCalledWith(['S1']);
     expect(notificationSpy.success).toHaveBeenCalled();
+  });
+
+  it('should reset form state and remove draft when cancelarActa is confirmed', () => {
+    dialogSpy.open.mockReturnValue({
+      afterClosed: () => of(true),
+    } as any);
+    const stepperResetSpy = vi.spyOn(component.stepper, 'reset');
+
+    localStorage.setItem('acta_borrador', JSON.stringify({
+      responsable: { usuario: 'MIRAM01' },
+      activos: [{ serial: 'S1', placa: 'P1' }],
+      ubicacion: { tiendaId: 1, estado: 'Disponible', ubicacion: 'Bodega' },
+    }));
+
+    component.responsableForm.patchValue({
+      usuario: 'MIRAM01',
+      cedula: '1082902763',
+      nombre: 'Miguel',
+      cargo: 'Analista',
+      correo: 'mmiranda@homecenter.co',
+    });
+    component.activosForm.patchValue({
+      serial: 'S1',
+      placa: 'P1',
+      tipo: 'Laptop',
+      marca: 'Dell',
+      modelo: '5490',
+    });
+    component.ubicacionForm.patchValue({
+      tiendaId: 1 as any,
+      estado: 'Disponible',
+      ubicacion: 'Bodega',
+    } as any);
+    component.activosAgregados.set([
+      { serial: 'S1', placa: 'P1', tipo: 'Laptop', marca: 'Dell', modelo: '5490' },
+    ]);
+    component.datosTecnicosActivo.set({
+      hostname: 'PC-001',
+      ipCableada: '10.0.0.1',
+      macCableada: 'AA:BB:CC:11:22:33',
+      ipInalambrica: '',
+      macInalambrica: '',
+      disco: '256',
+      memoria: '8',
+      mouse: 'Si',
+      teclado: 'Si',
+    });
+
+    component.cancelarActa();
+
+    expect(localStorage.getItem('acta_borrador')).toBeNull();
+    expect(component.activosAgregados()).toEqual([]);
+    expect(component.datosTecnicosActivo().hostname).toBe('');
+    expect(component.ubicacionForm.get('tiendaId')?.value).toBe(1);
+    expect(stepperResetSpy).toHaveBeenCalled();
   });
 });

@@ -325,17 +325,24 @@ export class CrearActaComponent implements OnInit, OnDestroy {
 
   private resetFormulario() {
     localStorage.removeItem(this.draftKey);
-    this.stepper.reset();
     this.activosAgregados.set([]);
-    this.responsableForm.enable();
-    this.activosForm.enable();
+    this.responsableForm.enable({ emitEvent: false });
+    this.activosForm.enable({ emitEvent: false });
+    this.responsableForm.reset();
+    this.activosForm.reset();
+    this.ubicacionForm.reset();
     this.limpiarDatosTecnicosActivo();
+    this.limpiarErroresDuplicado();
+    this.errorActivoDuplicado.set('');
+    this.campoActivoDuplicado.set(null);
+    this.stepper.reset();
+    this.preseleccionarTiendaUsuario(this.tiendas());
   }
 
   cancelarActa() {
     const dialogRef = this.dialog.open(Dialog, {
       width: '400px',
-      data: { mensaje: '¿Estás seguro de cancelar la creación del acta? Se perderán los datos ingresados.' }
+      data: { mensaje: '¿Estás seguro de reiniciar el formulario? Se eliminarán los datos ingresados y el borrador guardado.' }
     });
 
     dialogRef.afterClosed().subscribe(res => {
