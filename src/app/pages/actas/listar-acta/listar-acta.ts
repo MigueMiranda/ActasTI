@@ -3,6 +3,10 @@ import { ActasService } from './../../../core/services/actas.service';
 import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
 import { Dialog } from '../../../components/dialog/dialog';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -10,7 +14,11 @@ import { AuthService } from '../../../core/services/auth.service';
 @Component({
   selector: 'app-listar-acta',
   imports: [
-    CommonModule
+    CommonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
   ],
   templateUrl: './listar-acta.html',
 })
@@ -18,51 +26,29 @@ export class ListarActa implements OnInit {
   private dialog = inject(MatDialog);
   private notifications = inject(NotificationService);
   private authService = inject(AuthService);
-  private readonly userStoreId = this.authService.getUserStoreId();
+  private readonly userStoreId = this.normalizeNumber(this.authService.getUserStoreId());
   private tiendasPorId = new Map<number, string>();
   movimientos = signal<any[]>([]);
-  filtroTienda = signal('');
+  tiendasDisponibles = signal<Array<{ id: number; nombre: string }>>([]);
+  filtroTienda = signal<number | null>(this.userStoreId);
   filtroSerial = signal('');
   filtroResponsable = signal('');
   paginaActual = signal(1);
   itemsPorPagina = 10;
   reactivandoIds = signal<Set<number>>(new Set<number>());
-
-  tiendasDisponibles = computed(() => {
-    const mapTiendas = new Map<string, string>();
-
-    this.movimientos().forEach((mov) => {
-      const rawName = this.obtenerNombreTienda(mov);
-      const normalized = this.normalizarTexto(rawName);
-      if (!normalized) {
-        return;
-      }
-
-      if (!mapTiendas.has(normalized)) {
-        mapTiendas.set(normalized, rawName);
-      }
-    });
-    console.log('mapTiendas: ', mapTiendas);
-
-    return Array.from(mapTiendas.values()).sort((a, b) => a.localeCompare(b, 'es'));
-  });
+  isLoading = signal(false);
 
   movimientosFiltrados = computed(() => {
-    const tienda = this.normalizarTexto(this.filtroTienda());
     const serial = this.normalizarTexto(this.filtroSerial());
     const responsable = this.normalizarTexto(this.filtroResponsable());
+    const tiendaId = this.filtroTienda();
 
     return this.movimientos().filter((mov) => {
+      const items = Array.isArray(mov?.elemento) ? mov.elemento : [];
+      const cumpleTienda = tiendaId === null || this.movimientoPerteneceATienda(mov, items, tiendaId);
       const cumpleSerial = !serial || this.movimientoTieneSerial(mov, serial);
       const cumpleResponsable = !responsable || this.movimientoTieneResponsable(mov, responsable);
-
-      // Busquedas de serial/responsable deben abarcar todos los movimientos.
-      if (serial || responsable) {
-        return cumpleSerial && cumpleResponsable;
-      }
-
-      const cumpleTienda = !tienda || this.normalizarTexto(this.obtenerNombreTienda(mov)).includes(tienda);
-      return cumpleTienda;
+      return cumpleTienda && cumpleSerial && cumpleResponsable;
     });
   });
 
@@ -80,7 +66,7 @@ export class ListarActa implements OnInit {
 
   ngOnInit(): void {
     this.cargarTiendas();
-    this.cargarMovimientos(this.userStoreId);
+    this.cargarMovimientos(this.filtroTienda());
   }
 
   expandedId: number | null = null;
@@ -90,11 +76,9 @@ export class ListarActa implements OnInit {
   }
 
   cargarMovimientos(tiendaId: number | null = null) {
+    this.isLoading.set(true);
     this.actasService.getMovimientos(tiendaId).subscribe({
       next: (data: any[]) => {
-
-        console.log('Movimientos: ', data);
-
         const formateado = data.map((entry) => {
           const grupo = Array.isArray(entry) ? entry : [entry];
           const base = grupo[0] ?? {};
@@ -108,9 +92,11 @@ export class ListarActa implements OnInit {
 
         this.movimientos.set(formateado);
         this.paginaActual.set(1);
-
-        // Si el usuario tiene tienda en el token, preseleccionamos el filtro visual
-        this.sincronizarFiltroTiendaInicial();
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.notifications.error('No se pudieron cargar los movimientos');
+        this.isLoading.set(false);
       }
     });
   }
@@ -130,8 +116,10 @@ export class ListarActa implements OnInit {
             this.tiendasPorId.set(id, nombre);
           }
         });
-
-        this.sincronizarFiltroTiendaInicial();
+        const tiendas = Array.from(this.tiendasPorId.entries())
+          .map(([id, nombre]) => ({ id, nombre }))
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+        this.tiendasDisponibles.set(tiendas);
 
         if (this.movimientos().length > 0) {
           const reconciliado = this.movimientos().map((mov) => ({
@@ -154,10 +142,13 @@ export class ListarActa implements OnInit {
     }
   }
 
-  actualizarFiltro(tipo: 'tienda' | 'serial' | 'responsable', valor: string): void {
-    if (tipo === 'tienda') {
-      this.filtroTienda.set(valor);
-    }
+  onTiendaChange(valor: number | null): void {
+    this.filtroTienda.set(this.normalizeNumber(valor));
+    this.paginaActual.set(1);
+    this.cargarMovimientos(this.filtroTienda());
+  }
+
+  actualizarFiltro(tipo: 'serial' | 'responsable', valor: string): void {
     if (tipo === 'serial') {
       this.filtroSerial.set(valor);
     }
@@ -169,10 +160,11 @@ export class ListarActa implements OnInit {
   }
 
   limpiarFiltros(): void {
-    this.filtroTienda.set('');
+    this.filtroTienda.set(this.userStoreId);
     this.filtroSerial.set('');
     this.filtroResponsable.set('');
     this.paginaActual.set(1);
+    this.cargarMovimientos(this.filtroTienda());
   }
 
   verActa(path: string, event?: MouseEvent) {
@@ -239,22 +231,6 @@ export class ListarActa implements OnInit {
       return null;
     }
     return candidate;
-  }
-
-  private sincronizarFiltroTiendaInicial(): void {
-    if (this.filtroTienda()) {
-      return;
-    }
-
-    const storeId = this.normalizeNumber(this.userStoreId);
-    if (storeId === null) {
-      return;
-    }
-
-    const nombre = this.tiendasPorId.get(storeId);
-    if (nombre) {
-      this.filtroTienda.set(nombre);
-    }
   }
 
   private normalizarTexto(value: unknown): string {
@@ -354,6 +330,20 @@ export class ListarActa implements OnInit {
     }
 
     return null;
+  }
+
+  private movimientoPerteneceATienda(mov: any, items: any[], tiendaId: number): boolean {
+    const resolvedStoreId = this.obtenerTiendaId(mov, items);
+    if (resolvedStoreId !== null) {
+      return resolvedStoreId === tiendaId;
+    }
+
+    const expectedName = this.normalizarTexto(this.tiendasPorId.get(tiendaId) ?? '');
+    if (!expectedName) {
+      return false;
+    }
+
+    return this.normalizarTexto(this.obtenerNombreTienda(mov, items)) === expectedName;
   }
 
   private normalizeNumber(value: unknown): number | null {
@@ -478,7 +468,7 @@ export class ListarActa implements OnInit {
       next: (res: any) => {
         const msg = res?.message || 'Asignación reactivada y correo reenviado.';
         this.notifications.success(msg);
-        this.cargarMovimientos();
+        this.cargarMovimientos(this.filtroTienda());
       },
       error: (err) => {
         console.error('No se pudo reactivar la asignación', err);

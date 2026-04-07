@@ -2,31 +2,32 @@
     <h2>Historial de Movimientos</h2>
 
     <div class="header-filters">
-        <div class="filter-group">
-            <span class="material-icons">store</span>
-            <select [value]="filtroTienda()"
-                (change)="actualizarFiltro('tienda', $any($event.target).value)">
-                <option value="">Todas las tiendas</option>
-                @for (tienda of tiendasDisponibles(); track tienda) {
-                    <option [value]="tienda">{{ tienda }}</option>
+        <mat-form-field appearance="outline" class="listar-acta-filter-field listar-acta-filter-field-store">
+            <mat-label>Tienda</mat-label>
+            <mat-select [value]="filtroTienda()" (selectionChange)="onTiendaChange($event.value)" [disabled]="isLoading()">
+                <mat-option [value]="null">Todas las tiendas</mat-option>
+                @for (tienda of tiendasDisponibles(); track tienda.id) {
+                <mat-option [value]="tienda.id">{{ tienda.nombre }}</mat-option>
                 }
-            </select>
-        </div>
+            </mat-select>
+        </mat-form-field>
 
-        <div class="filter-group">
-            <span class="material-icons">qr_code_2</span>
-            <input type="text" placeholder="Buscar serial" [value]="filtroSerial()"
-                (input)="actualizarFiltro('serial', $any($event.target).value)">
-        </div>
+        <mat-form-field appearance="outline" class="listar-acta-filter-field">
+            <mat-label>Buscar serial</mat-label>
+            <input matInput [value]="filtroSerial()" (input)="actualizarFiltro('serial', $any($event.target).value)"
+                [disabled]="isLoading()">
+        </mat-form-field>
 
-        <div class="filter-group">
-            <span class="material-icons">person</span>
-            <input type="text" placeholder="Buscar responsable" [value]="filtroResponsable()"
-                (input)="actualizarFiltro('responsable', $any($event.target).value)">
-        </div>
+        <mat-form-field appearance="outline" class="listar-acta-filter-field">
+            <mat-label>Buscar responsable</mat-label>
+            <input matInput [value]="filtroResponsable()"
+                (input)="actualizarFiltro('responsable', $any($event.target).value)" [disabled]="isLoading()">
+        </mat-form-field>
 
-        <button class="primary-btn" (click)="limpiarFiltros()">
-            <span class="material-icons">cancel</span> Borrar Filtros
+        <button mat-stroked-button type="button" class="listar-acta-action-btn" (click)="limpiarFiltros()"
+            [disabled]="isLoading()">
+            <span class="material-icons">cancel</span>
+            <span>Borrar Filtros</span>
         </button>
     </div>
 
@@ -64,11 +65,11 @@
 
                 <td>
                     @if (tieneActa(mov)) {
-                    <button class="btn-pdf" (click)="verActa(mov.acta, $event)">
+                    <button mat-icon-button class="btn-pdf" (click)="verActa(mov.acta, $event)">
                         <span class="material-icons">picture_as_pdf</span>
                     </button>
                     } @else if (puedeReactivar(mov)) {
-                    <button class="btn-reactivar" [disabled]="estaReactivando(mov.id)" (click)="reactivar(mov, $event)"
+                    <button mat-icon-button class="btn-reactivar" [disabled]="estaReactivando(mov.id)" (click)="reactivar(mov, $event)"
                         [attr.aria-label]="estaReactivando(mov.id) ? 'Reactivando asignación' : 'Reactivar asignación'"
                         [attr.title]="estaReactivando(mov.id) ? 'Reactivando...' : 'Reactivar'">
                         <span class="material-icons" [class.rotate]="estaReactivando(mov.id)">
@@ -130,11 +131,11 @@
     <div class="paginacion">
         <span class="page-info">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
 
-        <button class="pagi-btn" [disabled]="paginaActual() === 1" (click)="cambiarPagina(paginaActual() - 1)">
+        <button mat-icon-button class="pagi-btn" [disabled]="paginaActual() === 1" (click)="cambiarPagina(paginaActual() - 1)">
             <span class="material-icons">chevron_left</span>
         </button>
 
-        <button class="pagi-btn" [disabled]="paginaActual() === totalPaginas()"
+        <button mat-icon-button class="pagi-btn" [disabled]="paginaActual() === totalPaginas()"
             (click)="cambiarPagina(paginaActual() + 1)">
             <span class="material-icons">chevron_right</span>
         </button>

@@ -1,6 +1,10 @@
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
 import { InventarioModel } from '../../../core/models/inventario.model';
 import { InventarioService } from '../../../core/services/inventario.service';
 import { catchError, of, switchMap } from 'rxjs';
@@ -12,7 +16,7 @@ import { TiendaModel } from '../../../core/models/tienda-estado.model';
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule],
   templateUrl: './inventario.html',
 })
 export class InventarioComponent implements OnInit {
@@ -38,6 +42,7 @@ export class InventarioComponent implements OnInit {
   pageSize = signal(10);
   skeletonRows = Array.from({ length: 8 });
   storeSelectValue = computed(() => {
+    this.tiendas();
     const storeId = this.filterTienda();
     return storeId === null ? '' : String(storeId);
   });
@@ -179,14 +184,13 @@ export class InventarioComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  updateFilter(type: 'tienda' | 'tipo' | 'estado' | 'serial' | 'placa' | 'fabricante' | 'modelo' | 'responsable', value: string) {
-    if (type === 'tienda') {
-      this.filterTienda.set(this.parseStoreId(value));
-      console.log('Tienda seleccionada: ', value);
-      this.currentPage.set(1);
-      this.cargarInventario(true);
-      return;
-    }
+  onTiendaChange(value: unknown): void {
+    this.filterTienda.set(this.normalizeStoreId(value));
+    this.currentPage.set(1);
+    this.cargarInventario(true);
+  }
+
+  updateFilter(type: 'tipo' | 'estado' | 'serial' | 'placa' | 'fabricante' | 'modelo' | 'responsable', value: string) {
     if (type === 'tipo') this.filterTipo.set(value);
     if (type === 'estado') this.filterEstado.set(value);
     if (type === 'serial') this.filterSerial.set(value);
@@ -203,20 +207,6 @@ export class InventarioComponent implements OnInit {
       return `"${text.replace(/"/g, '""')}"`;
     }
     return text;
-  }
-
-  private parseStoreId(value: string): number | null {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return null;
-    }
-
-    const parsed = Number(trimmed);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      return null;
-    }
-
-    return Math.trunc(parsed);
   }
 
   private getItemStoreId(item: InventarioModel): number | null {
@@ -266,17 +256,6 @@ export class InventarioComponent implements OnInit {
     this.filterTienda.set(this.userStoreId);
     this.currentPage.set(1);
     this.cargarInventario();
-  }
-
-  getStoreOptionValue(store: TiendaModel): string {
-    const normalizedStoreId = this.normalizeStoreId(
-      store.id
-      ?? (store as any)?.tienda_id
-      ?? (store as any)?.tiendaId
-      ?? (store as any)?.store_id
-      ?? (store as any)?.storeId
-    );
-    return normalizedStoreId === null ? '' : String(normalizedStoreId);
   }
 
   private normalizeStoreId(value: unknown): number | null {

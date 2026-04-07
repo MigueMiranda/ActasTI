@@ -11,7 +11,7 @@
       <span class="material-icons">edit_note</span>
       <div>
         <strong>Cargue individual</strong>
-        <p>Completa el formulario del equipo y envíalo directamente al backend.</p>
+        <p>Completa el formulario con la información del equipo para registrar correctamente el cargue individual.</p>
       </div>
     </button>
 
@@ -19,7 +19,8 @@
       <span class="material-icons">upload_file</span>
       <div>
         <strong>Cargue masivo</strong>
-        <p>Adjunta un CSV con varias filas y deja que el backend procese el lote.</p>
+        <p>Adjunta un archivo CSV con varias filas de equipos siguiendo la estructura requerida para procesar el lote.
+        </p>
       </div>
     </button>
   </section>
@@ -305,7 +306,7 @@
     <div class="card-header">
       <div>
         <h2>Cargue masivo por CSV</h2>
-        <p>Adjunta un archivo `.csv` con la estructura que espera el backend.</p>
+        <p>Adjunta un archivo `.csv` con la estructura esperada en el inventario.</p>
       </div>
       <span class="badge">Límite 10 MB</span>
     </div>
@@ -337,7 +338,7 @@
         Quitar archivo
       </button>
       <button type="submit" class="primary-btn" [disabled]="isSubmitting()">
-        {{ isSubmitting() ? 'Enviando...' : 'Enviar CSV al backend' }}
+        {{ isSubmitting() ? 'Cargando...' : 'Cargar CSV' }}
       </button>
     </div>
   </form>

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { CommonModule } from '@angular/common';
@@ -27,6 +27,7 @@ export class Login implements OnInit {
   usuario: string = '';
   password: string = '';
   mensaje_error: string = '';
+  capsLockActive = false;
   isSubmitting = false;
 
   ngOnInit(): void {
@@ -74,6 +75,13 @@ export class Login implements OnInit {
           this.notifications.error(this.mensaje_error);
         }
       });
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  @HostListener('document:keyup', ['$event'])
+  @HostListener('document:mousedown', ['$event'])
+  updateCapsLockState(event: KeyboardEvent | MouseEvent): void {
+    this.capsLockActive = event.getModifierState?.('CapsLock') ?? false;
   }
 
 

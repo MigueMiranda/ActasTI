@@ -346,6 +346,62 @@ $text-muted: #666;
 }
 
 app-inventario {
+  .header-filters {
+    align-items: stretch;
+  }
+
+  .inventory-filter-field {
+    width: min(220px, 100%);
+    margin-top: 15px;
+  }
+
+  .inventory-filter-field-store {
+    width: min(280px, 100%);
+  }
+
+  .inventory-filter-field .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  .inventory-filter-field .mat-mdc-text-field-wrapper {
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    background: #f1f5f9;
+    box-shadow: none !important;
+  }
+
+  .inventory-filter-field.mat-focused .mat-mdc-text-field-wrapper {
+    background: #fff;
+    border-color: #0066b3;
+    box-shadow: 0 0 0 3px rgba(0, 102, 179, 0.1) !important;
+  }
+
+  .inventory-filter-field .mdc-notched-outline__leading,
+  .inventory-filter-field .mdc-notched-outline__notch,
+  .inventory-filter-field .mdc-notched-outline__trailing {
+    border-color: transparent !important;
+  }
+
+  .inventory-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    min-height: 44px;
+    border-radius: 999px !important;
+    font-weight: 600;
+  }
+
+  .inventory-action-btn .material-icons {
+    font-size: 18px;
+  }
+
+  .inventory-action-btn-primary:not(:disabled) {
+    background: linear-gradient(135deg, #0066b3, #005292) !important;
+    color: #fff !important;
+    box-shadow: 0 10px 18px rgba(0, 102, 179, 0.22) !important;
+  }
+
   .skeleton-row td {
     padding: 14px;
     border-bottom: 1px solid #f1f5f9;
@@ -767,6 +823,18 @@ app-login {
     margin-top: 14px;
     color: #d32f2f;
     font-size: 13px;
+  }
+
+  .caps-lock-warning {
+    width: 70%;
+    margin: -2px auto 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #f2c96d;
+    background: #fff6dd;
+    color: #8a5a00;
+    font-size: 13px;
+    text-align: left;
   }
 
   footer {
@@ -1421,8 +1489,8 @@ app-crear-acta {
   }
 
   .mat-horizontal-stepper-header-container {
-    margin-bottom: 16px;
-    padding: 14px;
+    margin-bottom: 5px;
+    padding: 5px;
     border: 1px solid var(--border-soft);
     border-radius: 22px;
     background: linear-gradient(180deg, rgba(232, 243, 251, 0.95), #ffffff);
@@ -1648,6 +1716,56 @@ app-crear-acta {
 }
 
 app-listar-acta {
+  .header-filters {
+    align-items: stretch;
+  }
+
+  .listar-acta-filter-field {
+    width: min(240px, 100%);
+    margin-top: 15px;
+  }
+
+  .listar-acta-filter-field-store {
+    width: min(280px, 100%);
+  }
+
+  .listar-acta-filter-field .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  .listar-acta-filter-field .mat-mdc-text-field-wrapper {
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    background: #f1f5f9;
+    box-shadow: none !important;
+  }
+
+  .listar-acta-filter-field.mat-focused .mat-mdc-text-field-wrapper {
+    background: #fff;
+    border-color: #0066b3;
+    box-shadow: 0 0 0 3px rgba(0, 102, 179, 0.1) !important;
+  }
+
+  .listar-acta-filter-field .mdc-notched-outline__leading,
+  .listar-acta-filter-field .mdc-notched-outline__notch,
+  .listar-acta-filter-field .mdc-notched-outline__trailing {
+    border-color: transparent !important;
+  }
+
+  .listar-acta-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    min-height: 44px;
+    border-radius: 999px !important;
+    font-weight: 600;
+  }
+
+  .listar-acta-action-btn .material-icons {
+    font-size: 18px;
+  }
+
   .btn-reactivar {
     display: inline-flex;
     align-items: center;

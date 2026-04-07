@@ -69,6 +69,7 @@ describe('InventarioComponent', () => {
     expect(component.inventario().length).toBe(1);
     expect(component.isLoading()).toBe(false);
     expect(component.filterTienda()).toBe(1);
+    expect(component.storeSelectValue()).toBe('1');
     expect(inventarioServiceSpy.getInventario).toHaveBeenCalledWith(false, 1);
   });
 
@@ -89,5 +90,15 @@ describe('InventarioComponent', () => {
     component.updateFilter('serial', 'S1');
     expect(component.filterSerial()).toBe('S1');
     expect(component.currentPage()).toBe(1);
+  });
+
+  it('should refresh inventory when store filter changes', () => {
+    inventarioServiceSpy.getInventario.mockClear();
+
+    component.onTiendaChange(null);
+
+    expect(component.filterTienda()).toBeNull();
+    expect(component.currentPage()).toBe(1);
+    expect(inventarioServiceSpy.getInventario).toHaveBeenCalledWith(true, null);
   });
 });

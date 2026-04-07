@@ -6,6 +6,7 @@ import { vi } from 'vitest';
 import { ListarActa } from './listar-acta';
 import { ActasService } from '../../../core/services/actas.service';
 import { NotificationService } from '../../../core/services/notification.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 describe('ListarActa', () => {
   let component: ListarActa;
@@ -21,6 +22,7 @@ describe('ListarActa', () => {
     success: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
   };
+  let authServiceSpy: { getUserStoreId: ReturnType<typeof vi.fn> };
 
   const groupedMov = [
     [{
@@ -59,6 +61,9 @@ describe('ListarActa', () => {
       success: vi.fn(),
       error: vi.fn(),
     };
+    authServiceSpy = {
+      getUserStoreId: vi.fn().mockReturnValue(1),
+    };
 
     actasServiceSpy.getMovimientos.mockReturnValue(of(groupedMov as any));
     actasServiceSpy.getTiendas.mockReturnValue(of([
@@ -74,6 +79,7 @@ describe('ListarActa', () => {
         { provide: ActasService, useValue: actasServiceSpy },
         { provide: MatDialog, useValue: dialogSpy },
         { provide: NotificationService, useValue: notificationSpy },
+        { provide: AuthService, useValue: authServiceSpy },
       ],
     }).compileComponents();
 
@@ -91,6 +97,8 @@ describe('ListarActa', () => {
     expect(component.movimientos()[0].id).toBe(10);
     expect(component.movimientos()[0].elemento.length).toBe(1);
     expect(component.movimientos()[0].tiendaNombre).toBe('Tienda A');
+    expect(component.filtroTienda()).toBe(1);
+    expect(actasServiceSpy.getMovimientos).toHaveBeenCalledWith(1);
   });
 
   it('should allow reactivation when state is cancelado and without acta', () => {
@@ -98,14 +106,13 @@ describe('ListarActa', () => {
     expect(component.puedeReactivar(mov)).toBe(true);
   });
 
-  it('should search by serial globally even with store filter selected', () => {
-    component.actualizarFiltro('tienda', 'Tienda A');
+  it('should apply store filter and serial filter together', () => {
+    component.onTiendaChange(1);
     expect(component.movimientosFiltrados().length).toBe(1);
     expect(component.movimientosFiltrados()[0].id).toBe(10);
 
     component.actualizarFiltro('serial', 'X-999');
-    expect(component.movimientosFiltrados().length).toBe(1);
-    expect(component.movimientosFiltrados()[0].id).toBe(11);
+    expect(component.movimientosFiltrados().length).toBe(0);
   });
 
   it('should reactivate movimiento after confirmation', () => {
@@ -119,6 +126,20 @@ describe('ListarActa', () => {
     expect(dialogSpy.open).toHaveBeenCalled();
     expect(actasServiceSpy.reactivarAsignacion).toHaveBeenCalledWith(77);
     expect(notificationSpy.success).toHaveBeenCalled();
+  });
+
+  it('should reset filters to user store on limpiarFiltros', () => {
+    component.filtroTienda.set(2);
+    component.filtroSerial.set('S-001');
+    component.filtroResponsable.set('Miguel');
+    actasServiceSpy.getMovimientos.mockClear();
+
+    component.limpiarFiltros();
+
+    expect(component.filtroTienda()).toBe(1);
+    expect(component.filtroSerial()).toBe('');
+    expect(component.filtroResponsable()).toBe('');
+    expect(actasServiceSpy.getMovimientos).toHaveBeenCalledWith(1);
   });
 
   it('should download and open acta in new window', () => {

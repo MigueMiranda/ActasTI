@@ -113,4 +113,18 @@ describe('Login', () => {
     expect(component.mensaje_error).toBe('Usuario o contraseña incorrectos');
     expect(notificationSpy.error).toHaveBeenCalledWith('Usuario o contraseña incorrectos');
   });
+
+  it('should track caps lock state across the login page', () => {
+    component.updateCapsLockState({
+      getModifierState: (key: string) => key === 'CapsLock',
+    } as unknown as KeyboardEvent);
+
+    expect(component.capsLockActive).toBe(true);
+
+    component.updateCapsLockState({
+      getModifierState: () => false,
+    } as unknown as MouseEvent);
+
+    expect(component.capsLockActive).toBe(false);
+  });
 });
