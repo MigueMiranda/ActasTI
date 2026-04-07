@@ -15,7 +15,7 @@ describe('ListarActa', () => {
     getMovimientos: ReturnType<typeof vi.fn>;
     getTiendas: ReturnType<typeof vi.fn>;
     reactivarAsignacion: ReturnType<typeof vi.fn>;
-    getActaPdf: ReturnType<typeof vi.fn>;
+    getActaUrl: ReturnType<typeof vi.fn>;
   };
   let dialogSpy: { open: ReturnType<typeof vi.fn> };
   let notificationSpy: {
@@ -54,7 +54,7 @@ describe('ListarActa', () => {
       getMovimientos: vi.fn(),
       getTiendas: vi.fn(),
       reactivarAsignacion: vi.fn(),
-      getActaPdf: vi.fn(),
+      getActaUrl: vi.fn(),
     };
     dialogSpy = { open: vi.fn() };
     notificationSpy = {
@@ -142,30 +142,22 @@ describe('ListarActa', () => {
     expect(actasServiceSpy.getMovimientos).toHaveBeenCalledWith(1);
   });
 
-  it('should download and open acta in new window', () => {
-    const blob = new Blob(['pdf'], { type: 'application/pdf' });
-    actasServiceSpy.getActaPdf.mockReturnValue(of(blob));
-
+  it('should open acta in new window using resolved URL', () => {
+    actasServiceSpy.getActaUrl.mockReturnValue('https://bk-actas-sodimac.onrender.com/public/actas/acta-123.pdf');
     const stopPropagation = vi.fn();
-    const popupMock = {
-      document: { title: '', body: { textContent: '' } },
-      location: { href: '' },
-    } as any;
-
+    const popupMock = {} as Window;
     const openSpy = vi.spyOn(window, 'open').mockReturnValue(popupMock);
-    const createUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
-    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
     component.verActa('carpeta/acta-123.pdf', { stopPropagation } as any as MouseEvent);
 
     expect(stopPropagation).toHaveBeenCalled();
-    expect(actasServiceSpy.getActaPdf).toHaveBeenCalledWith('acta-123.pdf');
-    expect(openSpy).toHaveBeenCalledWith('', '_blank');
-    expect(popupMock.document.body.textContent).toBe('Cargando acta...');
-    expect(popupMock.location.href).toBe('blob:mock-url');
+    expect(actasServiceSpy.getActaUrl).toHaveBeenCalledWith('carpeta/acta-123.pdf');
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://bk-actas-sodimac.onrender.com/public/actas/acta-123.pdf',
+      '_blank',
+      'noopener,noreferrer'
+    );
 
     openSpy.mockRestore();
-    createUrlSpy.mockRestore();
-    revokeSpy.mockRestore();
   });
 });

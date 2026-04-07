@@ -170,67 +170,16 @@ export class ListarActa implements OnInit {
   verActa(path: string, event?: MouseEvent) {
     event?.stopPropagation();
 
-    const fileName = this.getSafeFileName(path);
-    if (!fileName) {
+    const actaUrl = this.actasService.getActaUrl(path);
+    if (!actaUrl) {
+      this.notifications.error('No se pudo abrir el acta');
       return;
     }
 
-    const popup = window.open('', '_blank');
-    if (popup) {
-      popup.document.title = 'Cargando acta...';
-      popup.document.body.textContent = 'Cargando acta...';
-      try {
-        popup.opener = null;
-      } catch {
-        // No-op: algunos navegadores no permiten sobrescribir opener.
-      }
+    const popup = window.open(actaUrl, '_blank', 'noopener,noreferrer');
+    if (!popup) {
+      this.notifications.error('El navegador bloqueó la ventana del acta');
     }
-
-    this.actasService.getActaPdf(fileName).subscribe({
-      next: (blob) => {
-        if (blob.size === 0) {
-          if (popup) {
-            popup.document.body.textContent = 'El archivo acta está vacío.';
-          }
-          return;
-        }
-
-        const blobType = blob.type.toLowerCase();
-        const looksLikeTextError = blobType.includes('text') || blobType.includes('json');
-        if (looksLikeTextError) {
-          blob.text().then((text) => {
-            if (popup) {
-              popup.document.body.textContent = text || 'Respuesta inesperada del servidor al abrir el acta.';
-            }
-          });
-          return;
-        }
-
-        const blobUrl = URL.createObjectURL(blob);
-        if (popup) {
-          popup.location.href = blobUrl;
-        } else {
-          window.open(blobUrl, '_blank');
-        }
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-      },
-      error: (err) => {
-        console.error('No se pudo abrir el acta', err);
-        this.notifications.error('No se pudo abrir el acta');
-        if (popup) {
-          const status = typeof err?.status === 'number' ? err.status : 'sin código';
-          popup.document.body.textContent = `No se pudo abrir el acta (status: ${status}). Verifica tu sesión o la ruta del archivo.`;
-        }
-      }
-    });
-  }
-
-  private getSafeFileName(path: string): string | null {
-    const candidate = path.split(/[\\/]/).pop()?.trim() ?? '';
-    if (!candidate || !/^[A-Za-z0-9._-]+$/.test(candidate)) {
-      return null;
-    }
-    return candidate;
   }
 
   private normalizarTexto(value: unknown): string {

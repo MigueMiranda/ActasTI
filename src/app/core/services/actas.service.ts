@@ -59,9 +59,32 @@ export class ActasService {
     });
   }
 
-  getActaPdf(fileName: string): Observable<Blob> {
-    const safeName = encodeURIComponent(fileName);
-    const candidates = this.buildActaCandidates(safeName);
+  getActaUrl(path: string): string | null {
+    const normalizedPath = this.normalizeActaPath(path);
+    if (!normalizedPath) {
+      return null;
+    }
+
+    if (this.isAbsoluteUrl(normalizedPath)) {
+      return normalizedPath;
+    }
+
+    const apiOrigin = this.getApiOrigin();
+    const relativePath = this.toRelativeActaPath(normalizedPath);
+    if (normalizedPath.startsWith('/') || relativePath.includes('/')) {
+      return this.resolveAgainstBase(apiOrigin, normalizedPath.startsWith('/') ? normalizedPath : `/${relativePath}`);
+    }
+
+    const fileName = this.extractActaFileName(normalizedPath);
+    if (!fileName) {
+      return null;
+    }
+
+    return this.resolveAgainstBase(apiOrigin, `${this.actasRelativeBase}/${encodeURIComponent(fileName)}`);
+  }
+
+  getActaPdf(path: string): Observable<Blob> {
+    const candidates = this.buildActaDownloadCandidates(path);
     return this.tryActaDownload(candidates, 0);
   }
 
@@ -73,17 +96,47 @@ export class ActasService {
     }
   }
 
-  private buildActaCandidates(safeFileName: string): string[] {
+  private buildActaDownloadCandidates(path: string): string[] {
+    const normalizedPath = this.normalizeActaPath(path);
+    if (!normalizedPath) {
+      return [];
+    }
+
     const origin = this.getApiOrigin();
+    const appOrigin = this.normalizeBaseUrl(globalThis.location?.origin ?? '');
     const apiPath = this.apiUrl.replace(origin, '');
+    const candidates: string[] = [];
+    const pushCandidate = (url: string | null) => {
+      if (url && !candidates.includes(url)) {
+        candidates.push(url);
+      }
+    };
 
-    const candidates = [
-      `${this.apiUrl}${this.actasRelativeBase}/${safeFileName}`,
-      `${origin}${this.actasRelativeBase}/${safeFileName}`,
-      `${origin}${apiPath}${this.actasRelativeBase}/${safeFileName}`,
-    ];
+    if (this.isAbsoluteUrl(normalizedPath)) {
+      pushCandidate(normalizedPath);
+    } else {
+      const relativePath = this.toRelativeActaPath(normalizedPath);
+      if (normalizedPath.startsWith('/')) {
+        pushCandidate(this.resolveAgainstBase(origin, normalizedPath));
+        pushCandidate(this.resolveAgainstBase(appOrigin, normalizedPath));
+      } else if (relativePath.includes('/')) {
+        pushCandidate(this.resolveAgainstBase(origin, `/${relativePath}`));
+        pushCandidate(this.resolveAgainstBase(appOrigin, `/${relativePath}`));
+      }
+    }
 
-    return [...new Set(candidates)];
+    const fileName = this.extractActaFileName(normalizedPath);
+    if (!fileName) {
+      return candidates;
+    }
+
+    const safeName = encodeURIComponent(fileName);
+
+    pushCandidate(`${this.apiUrl}${this.actasRelativeBase}/${safeName}`);
+    pushCandidate(`${origin}${this.actasRelativeBase}/${safeName}`);
+    pushCandidate(`${origin}${apiPath}${this.actasRelativeBase}/${safeName}`);
+
+    return candidates;
   }
 
   private tryActaDownload(urls: string[], index: number): Observable<Blob> {
@@ -94,5 +147,65 @@ export class ActasService {
     return this.http.get(urls[index], { responseType: 'blob' }).pipe(
       catchError(() => this.tryActaDownload(urls, index + 1))
     );
+  }
+
+  private normalizeActaPath(path: string): string {
+    if (typeof path !== 'string') {
+      return '';
+    }
+
+    return path
+      .trim()
+      .replace(/^["']|["']$/g, '')
+      .replace(/\\/g, '/');
+  }
+
+  private toRelativeActaPath(path: string): string {
+    return path.replace(/^\.\//, '').replace(/^\/+/, '');
+  }
+
+  private extractActaFileName(path: string): string | null {
+    const rawCandidate = path
+      .split('#', 1)[0]
+      .split('?', 1)[0]
+      .split('/')
+      .pop()
+      ?.trim() ?? '';
+
+    if (!rawCandidate) {
+      return null;
+    }
+
+    try {
+      return decodeURIComponent(rawCandidate);
+    } catch {
+      return rawCandidate;
+    }
+  }
+
+  private isAbsoluteUrl(path: string): boolean {
+    try {
+      const url = new URL(path);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  private resolveAgainstBase(base: string, path: string): string | null {
+    const normalizedBase = this.normalizeBaseUrl(base);
+    if (!normalizedBase) {
+      return null;
+    }
+
+    try {
+      return new URL(path, `${normalizedBase}/`).toString();
+    } catch {
+      return null;
+    }
+  }
+
+  private normalizeBaseUrl(value: string): string {
+    return value.replace(/\/+$/, '');
   }
 }

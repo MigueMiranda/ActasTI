@@ -47,6 +47,20 @@ describe('ActasService', () => {
     req.flush({ message: 'ok' });
   });
 
+  it('should resolve direct acta URL from a nested relative path', () => {
+    const apiOrigin = new URL(environment.API_URL).origin;
+
+    expect(service.getActaUrl('public/actas/acta_13.pdf')).toBe(
+      `${apiOrigin}/public/actas/acta_13.pdf`
+    );
+  });
+
+  it('should keep absolute acta URL when backend returns one', () => {
+    expect(service.getActaUrl('https://cdn.example.com/actas/acta_13.pdf?download=1')).toBe(
+      'https://cdn.example.com/actas/acta_13.pdf?download=1'
+    );
+  });
+
   it('should try alternative URL when first PDF path fails', () => {
     let result: Blob | null = null;
     service.getActaPdf('acta_13.pdf').subscribe((blob) => {
