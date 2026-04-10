@@ -69,6 +69,13 @@ export class ActasService {
       return normalizedPath;
     }
 
+    if (this.isServerFilePath(normalizedPath)) {
+      const actaId = this.extractActaIdFromPath(normalizedPath);
+      if (actaId) {
+        return `${this.apiUrl}/asignacion/acta/${actaId}`;
+      }
+    }
+
     const apiOrigin = this.getApiOrigin();
     const relativePath = this.toRelativeActaPath(normalizedPath);
     if (normalizedPath.startsWith('/') || relativePath.includes('/')) {
@@ -81,6 +88,15 @@ export class ActasService {
     }
 
     return this.resolveAgainstBase(apiOrigin, `${this.actasRelativeBase}/${encodeURIComponent(fileName)}`);
+  }
+
+  private isServerFilePath(path: string): boolean {
+    return path.includes('/opt/') || path.includes('public/actas/') || path.includes('\\');
+  }
+
+  private extractActaIdFromPath(path: string): string | null {
+    const match = path.match(/acta[_\-]?(\d+)\.pdf/i);
+    return match ? match[1] : null;
   }
 
   getActaPdf(path: string): Observable<Blob> {
