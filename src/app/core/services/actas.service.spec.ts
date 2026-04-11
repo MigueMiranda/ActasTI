@@ -47,11 +47,33 @@ describe('ActasService', () => {
     req.flush({ message: 'ok' });
   });
 
-  it('should resolve direct acta URL from a nested relative path', () => {
-    const apiOrigin = new URL(environment.API_URL).origin;
+  it('should request movimientos with server pagination params', () => {
+    service.getMovimientos(5, {
+      paginated: true,
+      page: 2,
+      limit: 15,
+      serial: 'S-001',
+      responsable: 'Miguel',
+    }).subscribe();
 
+    const req = httpMock.expectOne((request) =>
+      request.method === 'GET'
+      && request.url === `${environment.API_URL}/movimientos`
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('tiendaId')).toBe('5');
+    expect(req.request.params.get('paginated')).toBe('true');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('limit')).toBe('15');
+    expect(req.request.params.get('serial')).toBe('S-001');
+    expect(req.request.params.get('responsable')).toBe('Miguel');
+    expect(req.request.params.has('storeId')).toBe(false);
+    req.flush({ data: [], meta: { totalGroups: 0, page: 2, limit: 15, totalPages: 1 } });
+  });
+
+  it('should resolve direct acta URL from a nested relative path', () => {
     expect(service.getActaUrl('public/actas/acta_13.pdf')).toBe(
-      `${apiOrigin}/public/actas/acta_13.pdf`
+      `${environment.API_URL}/asignacion/acta/13`
     );
   });
 

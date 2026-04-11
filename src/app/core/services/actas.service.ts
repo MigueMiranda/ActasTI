@@ -10,7 +10,9 @@ export class ActasService {
   private apiUrl = environment.API_URL;
   private readonly actasRelativeBase = '/public/actas';
 
-  private readonly sessionKey = 'actasti_auth_session';
+  private isValidPositiveNumber(value: unknown): value is number {
+    return typeof value === 'number' && Number.isFinite(value) && value > 0;
+  }
 
   notificarActa(payload: any): Observable<any> {
     return this.http.post(
@@ -27,20 +29,48 @@ export class ActasService {
     })
   }
 
-  getMovimientos(tiendaId: number | null = null) {
+  getMovimientos(
+    tiendaId: number | null = null,
+    options: {
+      page?: number;
+      limit?: number;
+      serial?: string;
+      responsable?: string;
+      paginated?: boolean;
+    } = {}
+  ) {
     let params = new HttpParams();
 
-    if (tiendaId !== null && Number.isFinite(tiendaId) && tiendaId > 0) {
-      const value = String(Math.trunc(tiendaId));
-      params = params
-        .set('tiendaId', value)
-        .set('tienda_id', value)
-        .set('idTienda', value)
-        .set('storeId', value)
-        .set('store_id', value);
+    if (this.isValidPositiveNumber(tiendaId)) {
+      params = params.set('tiendaId', String(Math.trunc(tiendaId)));
     }
 
-    return this.http.get<any[]>(`${this.apiUrl}/movimientos`, { params });
+    const serial = typeof options.serial === 'string' ? options.serial.trim() : '';
+    if (serial) {
+      params = params.set('serial', serial);
+    }
+
+    const responsable = typeof options.responsable === 'string' ? options.responsable.trim() : '';
+    if (responsable) {
+      params = params.set('responsable', responsable);
+    }
+
+    const shouldPaginate =
+      options.paginated === true
+      || this.isValidPositiveNumber(options.page)
+      || this.isValidPositiveNumber(options.limit);
+
+    if (shouldPaginate) {
+      params = params.set('paginated', 'true');
+      if (this.isValidPositiveNumber(options.page)) {
+        params = params.set('page', String(Math.trunc(options.page)));
+      }
+      if (this.isValidPositiveNumber(options.limit)) {
+        params = params.set('limit', String(Math.trunc(options.limit)));
+      }
+    }
+
+    return this.http.get<any>(`${this.apiUrl}/movimientos`, { params });
   }
 
   getTiendas(): Observable<any[]> {

@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "vitest run src/styles.vitest.ts --reporter=verbose",
+    "test:ui": "vitest --ui"
   },
   "prettier": {
     "printWidth": 100,
@@ -34,14 +35,17 @@
     "chart.js": "^4.5.1",
     "ng2-charts": "^8.0.0",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "zone.js": "^0.16.1"
   },
   "devDependencies": {
     "@angular/build": "^21.0.4",
     "@angular/cli": "^21.0.4",
     "@angular/compiler-cli": "^21.0.0",
+    "@vitest/ui": "^4.1.4",
     "jsdom": "^27.1.0",
     "typescript": "~5.9.2",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.0.8"
   }
 }

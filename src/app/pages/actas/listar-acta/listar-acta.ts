@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, computed, inject } from '@angular/core';
 import { ActasService } from './../../../core/services/actas.service';
 import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs/operators';
@@ -22,7 +22,7 @@ import { AuthService } from '../../../core/services/auth.service';
   ],
   templateUrl: './listar-acta.html',
 })
-export class ListarActa implements OnInit {
+export class ListarActa implements OnInit, OnDestroy {
   private dialog = inject(MatDialog);
   private notifications = inject(NotificationService);
   private authService = inject(AuthService);
@@ -34,39 +34,31 @@ export class ListarActa implements OnInit {
   filtroSerial = signal('');
   filtroResponsable = signal('');
   paginaActual = signal(1);
+  totalPaginas = signal(1);
+  totalMovimientos = signal(0);
+  readonly actasConDocumento = computed(() => this.movimientos().filter((mov) => this.tieneActa(mov)).length);
+  readonly actasPendientes = computed(() => this.movimientos().filter((mov) => !this.tieneActa(mov)).length);
   itemsPorPagina = 10;
   reactivandoIds = signal<Set<number>>(new Set<number>());
   isLoading = signal(false);
+  private requestSequence = 0;
+  private filtrosDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  movimientosFiltrados = computed(() => {
-    const serial = this.normalizarTexto(this.filtroSerial());
-    const responsable = this.normalizarTexto(this.filtroResponsable());
-    const tiendaId = this.filtroTienda();
-
-    return this.movimientos().filter((mov) => {
-      const items = Array.isArray(mov?.elemento) ? mov.elemento : [];
-      const cumpleTienda = tiendaId === null || this.movimientoPerteneceATienda(mov, items, tiendaId);
-      const cumpleSerial = !serial || this.movimientoTieneSerial(mov, serial);
-      const cumpleResponsable = !responsable || this.movimientoTieneResponsable(mov, responsable);
-      return cumpleTienda && cumpleSerial && cumpleResponsable;
-    });
-  });
-
-  movimientosPaginados = computed(() => {
-    const ordenados = [...this.movimientosFiltrados()].sort((a, b) => b.id - a.id);
-    const inicio = (this.paginaActual() - 1) * this.itemsPorPagina;
-    const fin = inicio + this.itemsPorPagina;
-    return ordenados.slice(inicio, fin);
-  });
-
-
-  totalPaginas = computed(() => Math.max(1, Math.ceil(this.movimientosFiltrados().length / this.itemsPorPagina)));
+  movimientosFiltrados = computed(() => this.movimientos());
+  movimientosPaginados = computed(() => this.movimientosFiltrados());
 
   constructor(private actasService: ActasService) { }
 
   ngOnInit(): void {
     this.cargarTiendas();
-    this.cargarMovimientos(this.filtroTienda());
+    this.cargarMovimientos(this.filtroTienda(), 1);
+  }
+
+  ngOnDestroy(): void {
+    if (this.filtrosDebounceTimer) {
+      clearTimeout(this.filtrosDebounceTimer);
+      this.filtrosDebounceTimer = null;
+    }
   }
 
   expandedId: number | null = null;
@@ -75,11 +67,24 @@ export class ListarActa implements OnInit {
     this.expandedId = this.expandedId === id ? null : id;
   }
 
-  cargarMovimientos(tiendaId: number | null = null) {
+  cargarMovimientos(tiendaId: number | null = null, page: number = this.paginaActual()) {
     this.isLoading.set(true);
-    this.actasService.getMovimientos(tiendaId).subscribe({
+    const requestId = ++this.requestSequence;
+
+    this.actasService.getMovimientos(tiendaId, {
+      paginated: true,
+      page,
+      limit: this.itemsPorPagina,
+      serial: this.filtroSerial(),
+      responsable: this.filtroResponsable(),
+    }).subscribe({
       next: (data: any[]) => {
-        const formateado = data.map((entry) => {
+        if (requestId !== this.requestSequence) {
+          return;
+        }
+
+        const groups = this.extraerMovimientos(data);
+        const formateado = groups.map((entry) => {
           const grupo = Array.isArray(entry) ? entry : [entry];
           const base = grupo[0] ?? {};
 
@@ -91,14 +96,46 @@ export class ListarActa implements OnInit {
         });
 
         this.movimientos.set(formateado);
-        this.paginaActual.set(1);
+        this.actualizarMetaMovimientos(data, formateado.length, page);
         this.isLoading.set(false);
       },
       error: () => {
+        if (requestId !== this.requestSequence) {
+          return;
+        }
         this.notifications.error('No se pudieron cargar los movimientos');
         this.isLoading.set(false);
       }
     });
+  }
+
+  private extraerMovimientos(payload: any): any[] {
+    if (payload && typeof payload === 'object' && !Array.isArray(payload) && Array.isArray(payload.data)) {
+      return payload.data;
+    }
+
+    return Array.isArray(payload) ? payload : [];
+  }
+
+  private actualizarMetaMovimientos(payload: any, fallbackCount: number, requestedPage: number): void {
+    const meta = payload && typeof payload === 'object' && !Array.isArray(payload)
+      ? payload.meta
+      : null;
+
+    if (meta && typeof meta === 'object') {
+      const totalPages = this.normalizeNumber((meta as any).totalPages) ?? 1;
+      const currentPage = this.normalizeNumber((meta as any).page) ?? requestedPage;
+      const totalGroups = this.normalizeNumber((meta as any).totalGroups) ?? fallbackCount;
+
+      this.totalPaginas.set(Math.max(1, totalPages));
+      this.paginaActual.set(Math.max(1, currentPage));
+      this.totalMovimientos.set(Math.max(0, totalGroups));
+      return;
+    }
+
+    this.totalPaginas.set(1);
+    this.paginaActual.set(1);
+    this.totalMovimientos.set(fallbackCount);
   }
 
   private cargarTiendas(): void {
@@ -138,14 +175,13 @@ export class ListarActa implements OnInit {
 
   cambiarPagina(p: number) {
     if (p >= 1 && p <= this.totalPaginas()) {
-      this.paginaActual.set(p);
+      this.cargarMovimientos(this.filtroTienda(), p);
     }
   }
 
   onTiendaChange(valor: number | null): void {
     this.filtroTienda.set(this.normalizeNumber(valor));
-    this.paginaActual.set(1);
-    this.cargarMovimientos(this.filtroTienda());
+    this.cargarMovimientos(this.filtroTienda(), 1);
   }
 
   actualizarFiltro(tipo: 'serial' | 'responsable', valor: string): void {
@@ -156,15 +192,24 @@ export class ListarActa implements OnInit {
       this.filtroResponsable.set(valor);
     }
 
-    this.paginaActual.set(1);
+    this.programarRecargaPorFiltros();
   }
 
   limpiarFiltros(): void {
     this.filtroTienda.set(this.userStoreId);
     this.filtroSerial.set('');
     this.filtroResponsable.set('');
-    this.paginaActual.set(1);
-    this.cargarMovimientos(this.filtroTienda());
+    this.cargarMovimientos(this.filtroTienda(), 1);
+  }
+
+  private programarRecargaPorFiltros(): void {
+    if (this.filtrosDebounceTimer) {
+      clearTimeout(this.filtrosDebounceTimer);
+    }
+
+    this.filtrosDebounceTimer = setTimeout(() => {
+      this.cargarMovimientos(this.filtroTienda(), 1);
+    }, 250);
   }
 
   verActa(path: string, event?: MouseEvent) {

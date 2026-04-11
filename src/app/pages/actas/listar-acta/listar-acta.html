@@ -1,143 +1,177 @@
 <div class="container">
-    <h2>Historial de Movimientos</h2>
+    <section class="actas-page">
+        <div class="page-hero">
+            <div class="page-copy">
+                <p class="eyebrow">Actas TI</p>
+                <h1>Historial de movimientos</h1>
+                <p>Filtra por tienda, responsable o serial para revisar actas, asignaciones y estados desde una vista
+                    clara y ordenada.</p>
+            </div>
+        </div>
 
-    <div class="header-filters">
-        <mat-form-field appearance="outline" class="listar-acta-filter-field listar-acta-filter-field-store">
-            <mat-label>Tienda</mat-label>
-            <mat-select [value]="filtroTienda()" (selectionChange)="onTiendaChange($event.value)" [disabled]="isLoading()">
-                <mat-option [value]="null">Todas las tiendas</mat-option>
-                @for (tienda of tiendasDisponibles(); track tienda.id) {
-                <mat-option [value]="tienda.id">{{ tienda.nombre }}</mat-option>
-                }
-            </mat-select>
-        </mat-form-field>
+        <div class="summary-grid">
+            <article class="summary-card">
+                <span>Total registros</span>
+                <strong>{{ totalMovimientos() }}</strong>
+            </article>
+            <article class="summary-card">
+                <span>Actas con documento</span>
+                <strong>{{ actasConDocumento() }}</strong>
+            </article>
+            <article class="summary-card">
+                <span>Actas pendientes</span>
+                <strong>{{ actasPendientes() }}</strong>
+            </article>
+            <article class="summary-card">
+                <span>Tiendas disponibles</span>
+                <strong>{{ tiendasDisponibles().length }}</strong>
+            </article>
+        </div>
 
-        <mat-form-field appearance="outline" class="listar-acta-filter-field">
-            <mat-label>Buscar serial</mat-label>
-            <input matInput [value]="filtroSerial()" (input)="actualizarFiltro('serial', $any($event.target).value)"
-                [disabled]="isLoading()">
-        </mat-form-field>
+        <div class="filters-panel">
+            <div class="header-filters">
+                <mat-form-field appearance="outline" class="listar-acta-filter-field listar-acta-filter-field-store">
+                    <mat-label>Tienda</mat-label>
+                    <mat-select [value]="filtroTienda()" (selectionChange)="onTiendaChange($event.value)"
+                        [disabled]="isLoading()">
+                        <mat-option [value]="null">Todas las tiendas</mat-option>
+                        @for (tienda of tiendasDisponibles(); track tienda.id) {
+                        <mat-option [value]="tienda.id">{{ tienda.nombre }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
 
-        <mat-form-field appearance="outline" class="listar-acta-filter-field">
-            <mat-label>Buscar responsable</mat-label>
-            <input matInput [value]="filtroResponsable()"
-                (input)="actualizarFiltro('responsable', $any($event.target).value)" [disabled]="isLoading()">
-        </mat-form-field>
+                <mat-form-field appearance="outline" class="listar-acta-filter-field">
+                    <mat-label>Buscar serial</mat-label>
+                    <input matInput [value]="filtroSerial()"
+                        (input)="actualizarFiltro('serial', $any($event.target).value)" [disabled]="isLoading()">
+                </mat-form-field>
 
-        <button mat-stroked-button type="button" class="listar-acta-action-btn" (click)="limpiarFiltros()"
-            [disabled]="isLoading()">
-            <span class="material-icons">cancel</span>
-            <span>Borrar Filtros</span>
-        </button>
-    </div>
+                <mat-form-field appearance="outline" class="listar-acta-filter-field">
+                    <mat-label>Buscar responsable</mat-label>
+                    <input matInput [value]="filtroResponsable()"
+                        (input)="actualizarFiltro('responsable', $any($event.target).value)" [disabled]="isLoading()">
+                </mat-form-field>
 
-    <table class="tabla">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Tienda</th>
-                <th>Responsable</th>
-                <th>Estado Asignación</th>
-                <th>Caso</th>
-                <th>Ubicación</th>
-                <th>Actas</th>
-            </tr>
-        </thead>
+                <button mat-stroked-button type="button" class="listar-acta-action-btn" (click)="limpiarFiltros()"
+                    [disabled]="isLoading()">
+                    <span class="material-icons">cancel</span>
+                    <span>Borrar Filtros</span>
+                </button>
+            </div>
+        </div>
 
-        <tbody>
-            @for (mov of movimientosPaginados(); track mov.id) {
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Tienda</th>
+                    <th>Responsable</th>
+                    <th>Estado Asignación</th>
+                    <th>Caso</th>
+                    <th>Ubicación</th>
+                    <th>Actas</th>
+                </tr>
+            </thead>
 
-            <!-- FILA PRINCIPAL -->
-            <tr class="fila-movimiento" (click)="toggle(mov.id)">
-                <td>{{ mov.id }}</td>
-                <td>{{ mov.asignacion.created_at | date:'dd/MM/yyyy' }}</td>
-                <td>{{ mov.tiendaNombre || 'Sin tienda' }}</td>
-                <td>{{ mov.users.name }}</td>
-                <td>
-                    <span class="status" [ngClass]="mov.asignacion.estado_asignacion?.toLowerCase()">
-                        {{ mov.asignacion.estado_asignacion }}
-                    </span>
-                </td>
+            <tbody>
+                @for (mov of movimientosPaginados(); track mov.id) {
 
-                <td>{{ mov.caso }}</td>
-                <td>{{ mov.ubicacionElemento }}</td>
-
-                <td>
-                    @if (tieneActa(mov)) {
-                    <button mat-icon-button class="btn-pdf" (click)="verActa(mov.acta, $event)">
-                        <span class="material-icons">picture_as_pdf</span>
-                    </button>
-                    } @else if (puedeReactivar(mov)) {
-                    <button mat-icon-button class="btn-reactivar" [disabled]="estaReactivando(mov.id)" (click)="reactivar(mov, $event)"
-                        [attr.aria-label]="estaReactivando(mov.id) ? 'Reactivando asignación' : 'Reactivar asignación'"
-                        [attr.title]="estaReactivando(mov.id) ? 'Reactivando...' : 'Reactivar'">
-                        <span class="material-icons" [class.rotate]="estaReactivando(mov.id)">
-                            {{ estaReactivando(mov.id) ? 'autorenew' : 'refresh' }}
+                <!-- FILA PRINCIPAL -->
+                <tr class="fila-movimiento" (click)="toggle(mov.id)">
+                    <td>{{ mov.id }}</td>
+                    <td>{{ mov.asignacion.created_at | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ mov.tiendaNombre || 'Sin tienda' }}</td>
+                    <td>{{ mov.users.name }}</td>
+                    <td>
+                        <span class="status" [ngClass]="mov.asignacion.estado_asignacion?.toLowerCase()">
+                            {{ mov.asignacion.estado_asignacion }}
                         </span>
-                    </button>
-                    } @else {
-                    <span class="no-acta">Sin acta</span>
-                    }
-                </td>
+                    </td>
+
+                    <td>{{ mov.caso }}</td>
+                    <td>{{ mov.ubicacionElemento }}</td>
+
+                    <td>
+                        @if (tieneActa(mov)) {
+                        <button mat-icon-button class="btn-pdf" (click)="verActa(mov.acta, $event)">
+                            <span class="material-icons">picture_as_pdf</span>
+                        </button>
+                        } @else if (puedeReactivar(mov)) {
+                        <button mat-icon-button class="btn-reactivar" [disabled]="estaReactivando(mov.id)"
+                            (click)="reactivar(mov, $event)"
+                            [attr.aria-label]="estaReactivando(mov.id) ? 'Reactivando asignación' : 'Reactivar asignación'"
+                            [attr.title]="estaReactivando(mov.id) ? 'Reactivando...' : 'Reactivar'">
+                            <span class="material-icons" [class.rotate]="estaReactivando(mov.id)">
+                                {{ estaReactivando(mov.id) ? 'autorenew' : 'refresh' }}
+                            </span>
+                        </button>
+                        } @else {
+                        <span class="no-acta">Sin acta</span>
+                        }
+                    </td>
 
 
-            </tr>
+                </tr>
 
-            <!-- FILA EXPANDIDA -->
-            @if (expandedId === mov.id) {
-            <tr class="detalle-row">
-                <td colspan="9">
+                <!-- FILA EXPANDIDA -->
+                @if (expandedId === mov.id) {
+                <tr class="detalle-row">
+                    <td colspan="8">
 
-                    <table class="subtabla">
-                        <thead>
-                            <tr>
-                                <th>Serial</th>
-                                <th>Tipo</th>
-                                <th>Fabricante</th>
-                                <th>Modelo</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
+                        <table class="subtabla">
+                            <thead>
+                                <tr>
+                                    <th>Serial</th>
+                                    <th>Tipo</th>
+                                    <th>Fabricante</th>
+                                    <th>Modelo</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
 
-                        <tbody>
-                            @for (el of mov.elemento; track $index) {
-                            <tr>
-                                <td>{{ el.serial }}</td>
-                                <td>{{ el.elemento?.tipo }}</td>
-                                <td>{{ el.elemento?.fabricante }}</td>
-                                <td>{{ el.elemento?.modelo }}</td>
-                                <td>{{ el.estadoElemento }}</td>
-                            </tr>
-                            }
-                        </tbody>
-                    </table>
+                            <tbody>
+                                @for (el of mov.elemento; track $index) {
+                                <tr>
+                                    <td>{{ el.serial }}</td>
+                                    <td>{{ el.elemento?.tipo }}</td>
+                                    <td>{{ el.elemento?.fabricante }}</td>
+                                    <td>{{ el.elemento?.modelo }}</td>
+                                    <td>{{ el.estadoElemento }}</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
 
-                </td>
-            </tr>
-            }
+                    </td>
+                </tr>
+                }
 
-            }
+                }
 
-            @empty {
-            <tr>
-                <td colspan="9">Sin resultados</td>
-            </tr>
-            }
-        </tbody>
-    </table>
+                @empty {
+                <tr>
+                    <td colspan="8">Sin resultados</td>
+                </tr>
+                }
+            </tbody>
+        </table>
 
 
-    <div class="paginacion">
-        <span class="page-info">Página {{ paginaActual() }} de {{ totalPaginas() }}</span>
+        <div class="paginacion">
+            <span class="page-info">Página {{ paginaActual() }} de {{ totalPaginas() }} · {{ totalMovimientos() }}
+                registros</span>
 
-        <button mat-icon-button class="pagi-btn" [disabled]="paginaActual() === 1" (click)="cambiarPagina(paginaActual() - 1)">
-            <span class="material-icons">chevron_left</span>
-        </button>
+            <button mat-icon-button class="pagi-btn" [disabled]="paginaActual() === 1"
+                (click)="cambiarPagina(paginaActual() - 1)">
+                <span class="material-icons">chevron_left</span>
+            </button>
 
-        <button mat-icon-button class="pagi-btn" [disabled]="paginaActual() === totalPaginas()"
-            (click)="cambiarPagina(paginaActual() + 1)">
-            <span class="material-icons">chevron_right</span>
-        </button>
-    </div>
+            <button mat-icon-button class="pagi-btn" [disabled]="paginaActual() === totalPaginas()"
+                (click)="cambiarPagina(paginaActual() + 1)">
+                <span class="material-icons">chevron_right</span>
+            </button>
+        </div>
+    </section>
 </div>

@@ -49,6 +49,20 @@ describe('ListarActa', () => {
     }],
   ];
 
+  const groupedMovPaginated = {
+    data: groupedMov,
+    meta: {
+      totalGroups: 2,
+      page: 1,
+      limit: 10,
+      totalPages: 1,
+    }
+  };
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(async () => {
     actasServiceSpy = {
       getMovimientos: vi.fn(),
@@ -65,7 +79,7 @@ describe('ListarActa', () => {
       getUserStoreId: vi.fn().mockReturnValue(1),
     };
 
-    actasServiceSpy.getMovimientos.mockReturnValue(of(groupedMov as any));
+    actasServiceSpy.getMovimientos.mockReturnValue(of(groupedMovPaginated as any));
     actasServiceSpy.getTiendas.mockReturnValue(of([
       { id: 1, nombre: 'Tienda A' },
       { id: 2, nombre: 'Tienda B' },
@@ -98,7 +112,17 @@ describe('ListarActa', () => {
     expect(component.movimientos()[0].elemento.length).toBe(1);
     expect(component.movimientos()[0].tiendaNombre).toBe('Tienda A');
     expect(component.filtroTienda()).toBe(1);
-    expect(actasServiceSpy.getMovimientos).toHaveBeenCalledWith(1);
+    expect(component.totalPaginas()).toBe(1);
+    expect(actasServiceSpy.getMovimientos).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        paginated: true,
+        page: 1,
+        limit: 10,
+        serial: '',
+        responsable: '',
+      })
+    );
   });
 
   it('should allow reactivation when state is cancelado and without acta', () => {
@@ -106,13 +130,31 @@ describe('ListarActa', () => {
     expect(component.puedeReactivar(mov)).toBe(true);
   });
 
-  it('should apply store filter and serial filter together', () => {
+  it('should request backend filtering by store and serial', () => {
+    vi.useFakeTimers();
+
     component.onTiendaChange(1);
-    expect(component.movimientosFiltrados().length).toBe(1);
-    expect(component.movimientosFiltrados()[0].id).toBe(10);
+    expect(actasServiceSpy.getMovimientos).toHaveBeenLastCalledWith(
+      1,
+      expect.objectContaining({
+        paginated: true,
+        page: 1,
+      })
+    );
 
     component.actualizarFiltro('serial', 'X-999');
-    expect(component.movimientosFiltrados().length).toBe(0);
+    vi.advanceTimersByTime(250);
+
+    expect(actasServiceSpy.getMovimientos).toHaveBeenLastCalledWith(
+      1,
+      expect.objectContaining({
+        serial: 'X-999',
+        paginated: true,
+        page: 1,
+      })
+    );
+
+    vi.useRealTimers();
   });
 
   it('should reactivate movimiento after confirmation', () => {
@@ -139,7 +181,15 @@ describe('ListarActa', () => {
     expect(component.filtroTienda()).toBe(1);
     expect(component.filtroSerial()).toBe('');
     expect(component.filtroResponsable()).toBe('');
-    expect(actasServiceSpy.getMovimientos).toHaveBeenCalledWith(1);
+    expect(actasServiceSpy.getMovimientos).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        paginated: true,
+        page: 1,
+        serial: '',
+        responsable: '',
+      })
+    );
   });
 
   it('should open acta in new window using resolved URL', () => {

@@ -87,6 +87,13 @@
         "test": {
           "builder": "@angular/build:unit-test"
         }
+            ],
+            "styles": [
+              "src/styles.scss"
+            ],
+            "scripts": []
+          }
+        }
       }
     }
   }
