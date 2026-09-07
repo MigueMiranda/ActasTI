@@ -1,0 +1,310 @@
+/* Theme System - ActasTI
+ * Tres opciones de diseño corporativo profesional
+ */
+
+/* ============================================
+   GLOBAL DEBUG - Selectores corregidos
+   El data-theme está en el elemento HTML raíz
+============================================ */
+
+/* El header siempre debe tener color según el tema */
+html[data-theme="enterprise"] .header {
+  background: #0f172a !important;
+  border-bottom: 3px solid #0f172a !important;
+}
+
+html[data-theme="trust"] .header {
+  background: #1e40af !important;
+  border-bottom: 3px solid #1e40af !important;
+}
+
+html[data-theme="modern"] .header {
+  background: #4338ca !important;
+  border-bottom: 3px solid #4338ca !important;
+}
+
+/* El título también cambia */
+html[data-theme="enterprise"] .app-title {
+  color: #ffffff !important;
+}
+
+html[data-theme="trust"] .app-title {
+  color: #ffffff !important;
+}
+
+html[data-theme="modern"] .app-title {
+  color: #ffffff !important;
+}
+
+/* ============================================
+   TEMA 1: ENTERPRISE PRECISION
+============================================ */
+
+html[data-theme="enterprise"] {
+  /* Primary */
+  --primary: #0f172a;
+  --primary-dark: #020617;
+  --primary-light: #1e293b;
+  --primary-soft: #f1f5f9;
+  --primary-accent: #0891b2; /* Cyan */
+
+  /* Backgrounds - más gris */
+  --bg-canvas: #f1f5f9;
+  --bg-sidebar: #fafafa;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --surface-hover: #e2e8f0;
+
+  /* Borders */
+  --border-soft: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --border-strong: #94a3b8;
+
+  /* Text */
+  --text: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
+
+  /* Semantic */
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --info: #0891b2;
+  --info-bg: #ecfeff;
+
+  /* Depth */
+  --depth-shadow: none;
+  --depth-border: 1px solid var(--border-soft);
+  --depth-raised: none;
+
+  /* Spacing */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Typography */
+  --font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-mono: 'Consolas', 'Monaco', monospace;
+
+  /* Table specific */
+  --table-header-bg: var(--surface-alt);
+  --table-header-color: var(--text-secondary);
+  --table-row-hover: var(--surface-hover);
+  --table-border: var(--border-soft);
+
+  /* Buttons */
+  --btn-primary-bg: var(--primary);
+  --btn-primary-hover: var(--primary-dark);
+  --btn-secondary-bg: var(--surface-alt);
+  --btn-secondary-hover: var(--surface-hover);
+
+  /* Form */
+  --input-bg: var(--surface);
+  --input-border: var(--border-soft);
+  --input-focus: var(--primary-accent);
+
+  /* DEBUG: Color de debug para Enterprise */
+  --header-bg: #0f172a;
+  --header-text: #ffffff;
+}
+
+/* ============================================
+   TEMA 2: TRUST & CLARITY
+   Azul profesional, accesible, colors sutiles
+============================================ */
+
+html[data-theme="trust"] {
+  /* Primary */
+  --primary: #1e40af;
+  --primary-dark: #1e3a8a;
+  --primary-light: #3b82f6;
+  --primary-soft: #dbeafe;
+  --primary-accent: #2563eb;
+
+  /* Backgrounds */
+  --bg-canvas: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --surface-hover: #f1f5f9;
+
+  /* Borders */
+  --border-soft: #e5e7eb;
+  --border-subtle: #d1d5db;
+  --border-strong: #9ca3af;
+
+  /* Text */
+  --text: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-inverse: #ffffff;
+
+  /* Semantic */
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --info: #1e40af;
+  --info-bg: #dbeafe;
+
+  /* Depth */
+  --depth-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --depth-border: 1px solid var(--border-soft);
+  --depth-raised: 0 4px 6px rgba(0,0,0,0.07);
+
+  /* Spacing */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Typography */
+  --font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-mono: 'Consolas', 'Monaco', monospace;
+
+  /* Table specific */
+  --table-header-bg: linear-gradient(135deg, var(--primary), var(--primary-light));
+  --table-header-color: var(--text-inverse);
+  --table-row-hover: var(--surface-hover);
+  --table-border: var(--border-soft);
+
+  /* Buttons */
+  --btn-primary-bg: var(--primary);
+  --btn-primary-hover: var(--primary-dark);
+  --btn-secondary-bg: var(--surface-alt);
+  --btn-secondary-hover: var(--surface-hover);
+
+  /* Form */
+  --input-bg: var(--surface);
+  --input-border: var(--border-soft);
+  --input-focus: var(--primary);
+
+  /* DEBUG: Color de debug para Trust */
+  --header-bg: #1e40af;
+  --header-text: #ffffff;
+}
+
+/* ============================================
+   TEMA 3: MODERN SAAS
+   Indigo, espacioso, layered surfaces
+============================================ */
+
+html[data-theme="modern"] {
+  /* Primary */
+  --primary: #4338ca;
+  --primary-dark: #3730a3;
+  --primary-light: #6366f1;
+  --primary-soft: #eef2ff;
+  --primary-accent: #818cf8;
+
+  /* Backgrounds - más blancos y limpios */
+  --bg-canvas: #fafbfc;
+  --bg-sidebar: #f8f9fa;
+  --surface: #ffffff;
+  --surface-alt: #f9fafb;
+  --surface-hover: #f3f4f6;
+
+  /* Borders - más sutiles */
+  --border-soft: #e5e7eb;
+  --border-subtle: #d1d5db;
+  --border-strong: #9ca3af;
+
+  /* Text */
+  --text: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --text-inverse: #ffffff;
+
+  /* Semantic */
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --info: #4338ca;
+  --info-bg: #eef2ff;
+
+  /* Depth - Layered */
+  --depth-shadow: 0 4px 12px rgba(67, 56, 202, 0.08);
+  --depth-border: 1px solid rgba(67, 56, 202, 0.1);
+  --depth-raised: 0 8px 24px rgba(67, 56, 202, 0.12);
+
+  /* Spacing */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Table specific */
+  --table-header-bg: var(--surface-alt);
+  --table-header-color: var(--text-secondary);
+  --table-row-hover: var(--surface-hover);
+  --table-border: transparent;
+
+  /* Buttons */
+  --btn-primary-bg: var(--primary);
+  --btn-primary-hover: var(--primary-dark);
+  --btn-secondary-bg: var(--surface);
+  --btn-secondary-hover: var(--surface-alt);
+
+  /* Form */
+  --input-bg: var(--surface);
+  --input-border: var(--border-soft);
+  --input-focus: var(--primary-light);
+
+  /* DEBUG: Color de debug para Modern */
+  --header-bg: #4338ca;
+  --header-text: #ffffff;
+}
+
+/* ============================================
+   DEFAULT (fallback - trust)
+============================================ */
+
+html:not([data-theme]) {
+  --primary: #1e40af;
+  --primary-dark: #1e3a8a;
+  --primary-light: #3b82f6;
+  --primary-soft: #dbeafe;
+  --primary-accent: #2563eb;
+  
+  --bg-canvas: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --surface-hover: #f1f5f9;
+  
+  --border-soft: #e5e7eb;
+  --border-subtle: #d1d5db;
+  --border-strong: #9ca3af;
+  
+  --text: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-inverse: #ffffff;
+  
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --info: #1e40af;
+  --info-bg: #dbeafe;
+  
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  
+  --header-bg: #1e40af;
+  --header-text: #ffffff;
+}

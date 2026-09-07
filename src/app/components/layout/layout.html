@@ -1,4 +1,4 @@
-<div class="app-layout" [class.dark]="darkMode" [class.collapsed]="sidebarCollapsed">
+<div class="app-layout" [attr.data-theme-active]="themeService.currentTheme()" [class.dark]="darkMode" [class.collapsed]="sidebarCollapsed">
 
   <!-- HEADER -->
   <header class="header">
@@ -9,6 +9,22 @@
     <span class="app-title">ActasTI</span>
 
     <div class="header-right">
+      <!-- Theme Selector -->
+      <button mat-icon-button [matMenuTriggerFor]="themeMenu" aria-label="Cambiar tema" class="theme-btn">
+        <span class="material-icons">palette</span>
+      </button>
+      <mat-menu #themeMenu="matMenu">
+        <button mat-menu-item (click)="setTheme('enterprise')">
+          <span class="theme-label">Enterprise Precision</span>
+        </button>
+        <button mat-menu-item (click)="setTheme('trust')">
+          <span class="theme-label">Trust & Clarity</span>
+        </button>
+        <button mat-menu-item (click)="setTheme('modern')">
+          <span class="theme-label">Modern SaaS</span>
+        </button>
+      </mat-menu>
+
       <span class="user"><span class="material-icons">waving_hand</span> Hola <strong>{{ userName }}</strong></span>
       <button class="icon-btn" type="button" (click)="logout()" aria-label="Cerrar sesión">
         <span class="material-icons">logout</span>

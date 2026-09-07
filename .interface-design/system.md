@@ -1,79 +1,57 @@
 # Interface Design System - ActasTI
 
-## Direction & Feel
-- **Tono:** Corporativo profesional -干净, sobrio, confiable
-- **Primary:** `#1a365d` (azul navy profundo)
-- **Feel:** Confiable, ordenado, sin ruido visual
+## Sistema de Temas
+
+El proyecto soporta **3 temas corporativos profesionales** que puedes cambiar desde el header haciendo click en el icono de paleta.
+
+### Tema activo actual: Trust & Clarity (predeterminado)
+
+---
+
+## Temas Disponibles
+
+### 1. Enterprise Precision
+- **Feel:** Técnico, datos densos, control total
+- **Primary:** `#0f172a` (Navy oscuro)
+- **Accent:** `#0891b2` (Cyan)
+- **Depth:** Borders-only
+- **Best for:** Operaciones IT, gestión de activos densos
+
+### 2. Trust & Clarity (default)
+- **Feel:** Accesible, clara lectura, confiable
+- **Primary:** `#1e40af` (Azul profesional)
+- **Accent:** `#2563eb` (Blue)
+- **Depth:** Mix borders + subtle shadow
+- **Best for:** Help desk, usuarios generales
+
+### 3. Modern SaaS
+- **Feel:** Espacioso, moderno pero serio
+- **Primary:** `#4338ca` (Indigo)
+- **Accent:** `#818cf8` (Light indigo)
+- **Depth:** Layered surfaces
+- **Best for:** Admin general, interfaz moderna
+
+---
+
+## Cambiar Tema
+
+1. Haz click en el icono de **paleta** en el header
+2. Selecciona uno de los 3 temas
+3. El tema se guarda automáticamente en localStorage
+
+---
 
 ## Depth Strategy
-- **Approach:** Borders-only con surface color shifts
-- **No shadows** - todo definido por borders sutiles
-- **Elevación:** Solo por background color differences (surface vs surface-alt)
+- **Approach:** varies by theme
+- **No shadows** (enterprise) → **subtle shadows** (trust) → **layered** (modern)
+- **Elevación:** Surface color shifts
 
 ## Spacing
 - **Base unit:** 4px
-- **Border radius:** 6px (pequeño), 8px (mediano), 12px (grande)
+- **Border radius:** varies by theme (4-16px)
 - **Padding:** Múltiplos de 4px (12, 16, 20, 24)
-
-## Key Patterns
-
-### Tokens CSS
-```
---primary: #1a365d
---primary-dark: #0f2744
---primary-soft: #ebf4ff
---bg-canvas: #f1f5f9
---surface: #ffffff
---surface-alt: #f8fafc
---border-soft: #e2e8f0
---border-subtle: #cbd5e1
---text: #0f172a
---text-secondary: #475569
---text-muted: #64748b
-```
-
-### Tablas
-- Header: background surface-alt, border-bottom 1px
-- Sin gradientes, sin shadows
-- Borders sutiles (#e2e8f0)
-- Hover en filas: surface-alt
-
-### Buttons
-- Border-radius: 6px
-- Sin gradientes - color sólido
-- Sin box-shadow - solo border sutil en focus
-
-### Cards/Panels
-- Background: surface
-- Border: 1px solid border-soft
-- Border-radius: 8px
-- Sin shadow
-
-### Badges/Estados
-- Padding: 4px 10px
-- Border-radius: 4px
-- Colores pastel profesionales
-
-### Form Fields
-- Border-radius: 6px
-- Background: surface-alt
-- Focus: border-primary + box-shadow sutil (0 0 0 2px rgba)
-
-### Dashboard Filters
-- Layout: row, nowrap, gap 16px
-- Breakpoint: 768px (wrap en móvil)
-- Fields: min-width 180px, flex 0 0 auto
-- Button: align-items center
-
-## Components
-- Login: Fondo sutil gradient, card limpio con border
-- Dashboard KPIs: Grid 4 columnas, borders sutiles
-- Dashboard Filters: Horizontal row, responsive wrap
-- Sidebar: Fondo surface, border-right, items con hover
-- Stepper: Header con background surface-alt, border-radius 8px
 
 ## Tests
 - **Framework:** Vitest
-- **Ejecutar:** `npm test` o `npm run test:ui` (interfaz visual)
+- **Ejecutar:** `npm test`
 - **Archivos:** `src/**/*.vitest.ts`
-- **Nota:** Los tests de componentes Angular (`.spec.ts`) requieren configuración adicional del TestBed que no es compatible con Vitest sin migrar la sintaxis

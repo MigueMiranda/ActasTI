@@ -9,6 +9,10 @@ import {
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeService, type Theme } from '../../core/services/theme.service';
+import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
 
 
 @Component({
@@ -16,7 +20,10 @@ import { AuthService } from '../../core/services/auth.service';
   imports: [
     RouterOutlet,
     RouterLinkActive,
-    RouterLinkWithHref
+    RouterLinkWithHref,
+    MatButtonModule,
+    MatMenuModule,
+    MatIconModule
   ],
   templateUrl: './layout.html',
 })
@@ -24,6 +31,7 @@ export class Layout {
   private authService = inject(AuthService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  protected themeService = inject(ThemeService);
 
   userName: string = '';
 
@@ -66,4 +74,7 @@ export class Layout {
     this.router.navigate(['/']);
   }
 
+  setTheme(theme: Theme) {
+    this.themeService.setTheme(theme);
+  }
 }
